@@ -15,6 +15,21 @@
 # ============================================================
 set -eu
 
+# ── Parse "KEY=VALUE" arguments from UCloud "Extra options" ──
+# UCloud passes the Extra options field as positional arguments
+# to this script, e.g.:  HF_TOKEN=hf_xxx  MAX_TURNS=50
+for arg in "$@"; do
+    case "${arg}" in
+        HF_TOKEN=*)       HF_TOKEN="${arg#*=}" ;;
+        MODEL_NAME=*)     MODEL_NAME="${arg#*=}" ;;
+        SPLIT=*)          SPLIT="${arg#*=}" ;;
+        MAX_TURNS=*)      MAX_TURNS="${arg#*=}" ;;
+        BRANCH=*)         BRANCH="${arg#*=}" ;;
+        PRINT_MISMATCHES=*) PRINT_MISMATCHES="${arg#*=}" ;;
+        *) echo "Unknown argument: ${arg}" ;;
+    esac
+done
+
 # ── Configuration (override via env) ─────────────────────────
 REPO_URL="https://github.com/kwa6/dst-unified.git"
 REPO_DIR="${HOME}/dst-unified"

@@ -93,6 +93,8 @@ else
 fi
 
 pip install -r "${REPO_DIR}/requirements.txt" --quiet
+# huggingface_hub CLI is installed by requirements; install explicitly to be safe
+pip install huggingface_hub --quiet
 echo "  Packages installed OK" | tee -a "${LOG_FILE}"
 
 # ── 5. Prepare data ──────────────────────────────────────────

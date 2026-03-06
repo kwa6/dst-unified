@@ -68,12 +68,13 @@ class QwenDSTModel:
         """
         messages = [{"role": "user", "content": prompt}]
 
-        # apply_chat_template adds the special tokens Qwen2.5 expects
-        input_ids = self.tokenizer.apply_chat_template(
+        # apply_chat_template returns a plain list of token ids
+        token_ids = self.tokenizer.apply_chat_template(
             messages,
             add_generation_prompt=True,
-            return_tensors="pt",
-        ).to(self.device)
+            return_tensors=None,   # returns a plain Python list
+        )
+        input_ids = torch.tensor([token_ids], dtype=torch.long).to(self.device)
 
         with torch.no_grad():
             output_ids = self.model.generate(

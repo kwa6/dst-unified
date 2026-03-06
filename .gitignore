@@ -1,2 +1,16 @@
+# environments
+.venv/
+.env
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# editor / OS
+.vscode/
+.DS_Store
+
+# project outputs
 data_raw/
-runs/
+

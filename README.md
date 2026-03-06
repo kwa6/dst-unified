@@ -1,35 +1,19 @@
-# DST Unified
+git clone https://github.com/kwa6/dst-unified.git
+cd dst-unified
 
-This repository contains code for Dialogue State Tracking (DST) unified model.
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 
-## Installation
+mkdir -p data_raw
+cd data_raw
+git clone https://github.com/smartyfh/MultiWOZ2.4.git
+cd MultiWOZ2.4/data
+unzip MULTIWOZ2.4.zip -d MULTIWOZ2.4
+cd ~/dst-unified
 
-1. Clone the repository:
-   ```bash
-   git clone <repo-url>
-   cd dst-unified
-   ```
+export PYTHONPATH=src
 
-2. Create a virtual environment:
-   ```bash
-   python -m venv .venv
-   ```
-
-3. Activate the virtual environment:
-   ```bash
-   source .venv/bin/activate
-   ```
-
-4. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-[Add specific usage instructions here]
-
-## Troubleshooting
-
-- If you encounter issues with CUDA or GPU dependencies, ensure you have the appropriate NVIDIA drivers installed.
-- For any package installation errors, try updating pip: `pip install --upgrade pip`
+python -m dst.data.multiwoz_adapter
+python -m dst.runners.train_t5_balanced --train_path data_unified/multiwoz24/train.jsonl --total_examples 2000 --steps 500 --out_dir runs/t5_mwoz_train_v1
+python -m dst.runners.eval_jga --path data_unified/multiwoz24/val.jsonl --model runs/t5_mwoz_train_v1/final

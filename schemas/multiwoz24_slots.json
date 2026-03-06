@@ -1,0 +1,23 @@
+{
+  "hotel-area": {
+    "description": "area or part of town where the hotel is located",
+    "examples": ["centre", "north", "south", "east", "west"]
+  },
+  "hotel-pricerange": {
+    "description": "price range of the hotel",
+    "examples": ["cheap", "moderate", "expensive"]
+  },
+
+  "restaurant-area": {
+    "description": "area or part of town where the restaurant is located",
+    "examples": ["centre", "north", "south", "east", "west"]
+  },
+  "restaurant-food": {
+    "description": "type of cuisine served at the restaurant",
+    "examples": ["chinese", "italian", "indian", "british"]
+  },
+  "restaurant-pricerange": {
+    "description": "price range of the restaurant",
+    "examples": ["cheap", "moderate", "expensive"]
+  }
+}

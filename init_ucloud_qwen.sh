@@ -105,7 +105,7 @@ if [ -n "${HF_TOKEN}" ]; then
     export HF_TOKEN="${HF_TOKEN}"
     export HUGGING_FACE_HUB_TOKEN="${HF_TOKEN}"
     # Log in so gated models (e.g. Qwen2.5) can be downloaded
-    huggingface-cli login --token "${HF_TOKEN}" --add-to-git-credential 2>&1 | tee -a "${LOG_FILE}"
+    "${REPO_DIR}/.venv/bin/huggingface-cli" login --token "${HF_TOKEN}" --add-to-git-credential 2>&1 | tee -a "${LOG_FILE}"
     echo "  HF login OK" | tee -a "${LOG_FILE}"
 else
     echo "  WARNING: No HF_TOKEN set — gated models may fail to download." | tee -a "${LOG_FILE}"

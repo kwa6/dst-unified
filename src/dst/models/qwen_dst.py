@@ -37,7 +37,7 @@ class QwenDSTModel:
 
         local = _is_local_model_path(self.model_name)
         load_kwargs: dict = dict(
-            torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
+            dtype=torch.float16 if self.device != "cpu" else torch.float32,
             device_map="auto" if self.device != "cpu" else None,
         )
 
@@ -68,23 +68,28 @@ class QwenDSTModel:
         """
         messages = [{"role": "user", "content": prompt}]
 
-        # apply_chat_template returns a plain list of token ids
-        token_ids = self.tokenizer.apply_chat_template(
+        # Render the chat template to a plain string, then tokenize normally
+        text = self.tokenizer.apply_chat_template(
             messages,
             add_generation_prompt=True,
-            return_tensors=None,   # returns a plain Python list
+            tokenize=False,        # returns a plain string
         )
-        input_ids = torch.tensor([token_ids], dtype=torch.long).to(self.device)
+        inputs = self.tokenizer(
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=1024,
+        ).to(self.device)
 
         with torch.no_grad():
             output_ids = self.model.generate(
-                input_ids,
+                **inputs,
                 max_new_tokens=max_new_tokens,
-                do_sample=False,          # greedy for deterministic DST
+                do_sample=False,
                 pad_token_id=self.tokenizer.eos_token_id,
             )
 
         # Decode only the newly generated tokens (strip the input)
-        new_tokens = output_ids[0][input_ids.shape[-1]:]
+        new_tokens = output_ids[0][inputs["input_ids"].shape[-1]:]
         text = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
         return _norm_pred(text)

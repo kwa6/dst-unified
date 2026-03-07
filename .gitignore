@@ -13,5 +13,6 @@ __pycache__/
 
 # project outputs
 data_raw/
+runs/
 
 data_unified/d0t/train.jsonl

@@ -1,19 +1,41 @@
-git clone https://github.com/kwa6/dst-unified.git
-cd dst-unified
+# dst-unified
 
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+A unified research pipeline for Dialogue State Tracking (DST).
 
-mkdir -p data_raw
-cd data_raw
-git clone https://github.com/smartyfh/MultiWOZ2.4.git
-cd MultiWOZ2.4/data
-unzip MULTIWOZ2.4.zip -d MULTIWOZ2.4
-cd ~/dst-unified
+This project converts different DST datasets into a shared slot-centric JSONL format, trains a model on that unified format, and evaluates with standard DST metrics such as Joint Goal Accuracy (JGA).
 
-export PYTHONPATH=src
+Current support:
+- MultiWOZ 2.4
+- D0T / DSG5K
+- LUAS
+- Flan-T5 training and inference
+- slot-level exact match
+- JGA evaluation
 
-python -m dst.data.multiwoz_adapter
-python -m dst.runners.train_t5_balanced --train_path data_unified/multiwoz24/train.jsonl --total_examples 2000 --steps 500 --out_dir runs/t5_mwoz_train_v1
-python -m dst.runners.eval_jga --path data_unified/multiwoz24/val.jsonl --model runs/t5_mwoz_train_v1/final
+## Core idea
+
+We reformulate DST as:
+
+(dialogue context + slot name + slot description) -> slot value
+
+This makes it possible to compare different datasets under the same:
+- model
+- prompt
+- training loop
+- evaluation pipeline
+
+## Repository structure
+
+```text
+dst-unified/
+├── configs/
+├── schemas/
+├── scripts/
+├── src/
+│   └── dst/
+│       ├── data/
+│       ├── models/
+│       ├── runners/
+│       └── schemas.py
+├── requirements.txt
+└── README.md

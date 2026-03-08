@@ -3,6 +3,7 @@ import random
 from pathlib import Path
 
 import torch
+torch.backends.cudnn.benchmark = True
 from datasets import Dataset
 from transformers import (
     AutoTokenizer,
@@ -95,6 +96,15 @@ def main():
     print("Loading model/tokenizer...")
     tok = AutoTokenizer.from_pretrained(args.model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(args.model_name)
+    
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    print(f"Model device: {model.device}")
+    if torch.cuda.is_available():
+        model = model.to("cuda")
+        print("Model moved to CUDA")
+        print(f"Model device after move: {model.device}")
+    else:
+        print("Using CPU")
 
     preprocess = make_preprocess_fn(tok)
     ds_tok = ds.map(preprocess, batched=True, remove_columns=ds.column_names)
@@ -102,7 +112,7 @@ def main():
     collator = DataCollatorForSeq2Seq(tokenizer=tok, model=model)
     # fp16 = torch.cuda.is_available()
     # fp16 often causes NaNs in this environment; keep training in fp32 for stability
-    fp16 = False
+    fp16 = True
     
     train_args = TrainingArguments(
         output_dir=str(out_dir),
@@ -114,11 +124,11 @@ def main():
         logging_strategy="steps",
         logging_first_step=True,
         report_to=[],
-        fp16=False,
+        fp16=True,
         max_grad_norm=1.0,
         save_strategy="no",
         dataloader_num_workers=0,
-        dataloader_pin_memory=False,
+        dataloader_pin_memory=True,
         optim="adamw_torch",
         seed=args.seed,
     )

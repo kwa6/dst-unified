@@ -1,0 +1,151 @@
+{
+  "attraction-area": {
+    "description": "value for attraction area",
+    "examples": null
+  },
+  "attraction-name": {
+    "description": "value for attraction name",
+    "examples": null
+  },
+  "attraction-type": {
+    "description": "value for attraction type",
+    "examples": null
+  },
+  "hotel-area": {
+    "description": "area or part of town where the hotel is located",
+    "examples": [
+      "centre",
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  },
+  "hotel-bookday": {
+    "description": "value for hotel bookday",
+    "examples": null
+  },
+  "hotel-bookpeople": {
+    "description": "value for hotel bookpeople",
+    "examples": null
+  },
+  "hotel-bookstay": {
+    "description": "value for hotel bookstay",
+    "examples": null
+  },
+  "hotel-internet": {
+    "description": "value for hotel internet",
+    "examples": null
+  },
+  "hotel-name": {
+    "description": "value for hotel name",
+    "examples": null
+  },
+  "hotel-parking": {
+    "description": "value for hotel parking",
+    "examples": null
+  },
+  "hotel-pricerange": {
+    "description": "price range of the hotel",
+    "examples": [
+      "cheap",
+      "moderate",
+      "expensive"
+    ]
+  },
+  "hotel-stars": {
+    "description": "value for hotel stars",
+    "examples": null
+  },
+  "hotel-type": {
+    "description": "value for hotel type",
+    "examples": null
+  },
+  "restaurant-area": {
+    "description": "area or part of town where the restaurant is located",
+    "examples": [
+      "centre",
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  },
+  "restaurant-bookday": {
+    "description": "value for restaurant bookday",
+    "examples": null
+  },
+  "restaurant-bookpeople": {
+    "description": "value for restaurant bookpeople",
+    "examples": null
+  },
+  "restaurant-booktime": {
+    "description": "value for restaurant booktime",
+    "examples": null
+  },
+  "restaurant-food": {
+    "description": "type of cuisine served at the restaurant",
+    "examples": [
+      "chinese",
+      "italian",
+      "indian",
+      "british"
+    ]
+  },
+  "restaurant-name": {
+    "description": "value for restaurant name",
+    "examples": null
+  },
+  "restaurant-pricerange": {
+    "description": "price range of the restaurant",
+    "examples": [
+      "cheap",
+      "moderate",
+      "expensive"
+    ]
+  },
+  "taxi-arriveby": {
+    "description": "value for taxi arriveby",
+    "examples": null
+  },
+  "taxi-departure": {
+    "description": "value for taxi departure",
+    "examples": null
+  },
+  "taxi-destination": {
+    "description": "value for taxi destination",
+    "examples": null
+  },
+  "taxi-leaveat": {
+    "description": "value for taxi leaveat",
+    "examples": null
+  },
+  "train-arriveby": {
+    "description": "value for train arriveby",
+    "examples": null
+  },
+  "train-bookpeople": {
+    "description": "value for train bookpeople",
+    "examples": null
+  },
+  "train-day": {
+    "description": "value for train day",
+    "examples": null
+  },
+  "train-departure": {
+    "description": "value for train departure",
+    "examples": null
+  },
+  "train-destination": {
+    "description": "value for train destination",
+    "examples": null
+  },
+  "train-leaveat": {
+    "description": "value for train leaveat",
+    "examples": null
+  },
+  "train-trainid": {
+    "description": "value for train trainid",
+    "examples": null
+  }
+}

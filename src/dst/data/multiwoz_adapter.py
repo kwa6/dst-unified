@@ -125,5 +125,5 @@ def build_multiwoz_splits(limit_train=None, limit_val=None, limit_test=None):
 
 
 if __name__ == "__main__":
-    # Start small by default
-    build_multiwoz_splits(limit_train=50, limit_val=20, limit_test=20)
+    # Build full splits for script-driven use
+    build_multiwoz_splits()

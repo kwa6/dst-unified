@@ -12,7 +12,6 @@ def format_slot_prompt(dialogue_context: str, slot_name: str, slot_description: 
     Minimal, model-agnostic prompt.
     Works for T5 (seq2seq) and later Llama (causal) with small changes.
     """
-    # Keep it simple and consistent
     return (
         "Dialogue:\n"
         f"{dialogue_context}\n\n"
@@ -20,7 +19,12 @@ def format_slot_prompt(dialogue_context: str, slot_name: str, slot_description: 
         f"{slot_name}\n\n"
         "Description:\n"
         f"{slot_description}\n\n"
-        "Answer with the slot value. If it is not provided, answer 'none'."
+        "Instructions:\n"
+        "- Extract the exact slot value as mentioned or implied in the dialogue.\n"
+        "- Use only the most recent value if it changes across turns.\n"
+        "- If the user doesn't care about the value, answer 'dontcare'.\n"
+        "- If the slot is not mentioned at all, answer 'none'.\n"
+        "- Reply with the slot value only — no explanation.\n"
     )
 
 

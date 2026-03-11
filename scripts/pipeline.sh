@@ -33,9 +33,13 @@ run_step bash scripts/build_luas.sh
 run_step bash scripts/train_multiwoz.sh
 run_step bash scripts/train_d0t.sh
 run_step bash scripts/train_luas.sh
-run_step bash scripts/eval_llm.sh
 
-# Final evaluation
+# Train Llama with LoRA (only if HF_TOKEN is set — model is gated)
+if [ -n "${HF_TOKEN:-}" ]; then
+  run_step bash scripts/train_llama.sh
+fi
+
+# Final evaluation — T5 fine-tuned models
 run_step bash scripts/eval_jga.sh \
   runs/t5_d0t_v1/final \
   data_unified/multiwoz24/test.jsonl
@@ -47,5 +51,8 @@ run_step bash scripts/eval_jga.sh \
 run_step bash scripts/eval_jga.sh \
   runs/t5_mwoz_train_v1/final \
   data_unified/multiwoz24/test.jsonl
+
+# Final evaluation — LLM zero-shot + fine-tuned
+run_step bash scripts/eval_llm.sh
 
 

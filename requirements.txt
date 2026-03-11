@@ -5,3 +5,4 @@ accelerate
 sentencepiece
 pyyaml
 rich
+peft

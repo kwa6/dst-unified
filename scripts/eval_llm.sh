@@ -33,8 +33,20 @@ for MODEL in "${LLAMA_MODELS[@]}"; do
   echo "=========================================="
   echo "LLM eval: ${MODEL}"
   echo "=========================================="
-  bash scripts/eval_jga_llama.sh "$MODEL" "$TEST_PATH"
+  bash scripts/eval_jga_llama.sh "$MODEL" "$TEST_PATH" || \
+    echo "WARNING: eval failed for ${MODEL}, continuing..."
 done
+
+# ── Also eval fine-tuned Llama checkpoint if it exists ────────────────────
+FT_CHECKPOINT="runs/llama_mwoz_v1/final"
+if [ -d "${FT_CHECKPOINT}" ]; then
+  echo
+  echo "=========================================="
+  echo "LLM eval (fine-tuned): ${FT_CHECKPOINT}"
+  echo "=========================================="
+  bash scripts/eval_jga_llama.sh "$FT_CHECKPOINT" "$TEST_PATH" || \
+    echo "WARNING: fine-tuned eval failed, continuing..."
+fi
 
 echo
 echo "All LLM zero-shot evals complete."

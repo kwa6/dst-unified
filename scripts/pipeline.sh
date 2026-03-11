@@ -48,17 +48,6 @@ run_step bash scripts/eval_jga.sh \
   data_unified/multiwoz24/test.jsonl
 
 # ── LLM zero-shot evaluations ─────────────────────────────────────────────
-# These require a HuggingFace token with access to gated Llama models.
-# Set HF_TOKEN in the environment (e.g. via UCloud "Extra options") to enable.
-if [ -n "${HF_TOKEN:-}" ]; then
-  python -c "from huggingface_hub import login; login(token='${HF_TOKEN}')" \
-    2>/dev/null && echo "HuggingFace login OK"
-else
-  echo "WARNING: HF_TOKEN not set — skipping LLM zero-shot evals"
-fi
-
-if [ -n "${HF_TOKEN:-}" ]; then
-  run_step bash scripts/eval_jga_llama.sh \
-    meta-llama/Llama-2-7b-chat-hf \
-    data_unified/multiwoz24/test.jsonl
-fi
+# Edit scripts/eval_llm.sh to add/remove models.
+# Requires HF_TOKEN in the environment; skipped gracefully if not set.
+run_step bash scripts/eval_llm.sh

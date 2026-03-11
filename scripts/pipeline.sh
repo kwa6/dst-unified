@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Source environment setup so it stays active in this shell
+run_step() {
+  echo
+  echo "------------------------------------------"
+  echo "Running: $*"
+  echo "------------------------------------------"
+  "$@"
+}
+
 echo
 echo "------------------------------------------"
 echo "Sourcing: scripts/setup_env.sh"

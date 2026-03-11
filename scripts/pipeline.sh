@@ -33,6 +33,7 @@ run_step bash scripts/build_luas.sh
 run_step bash scripts/train_multiwoz.sh
 run_step bash scripts/train_d0t.sh
 run_step bash scripts/train_luas.sh
+run_step bash scripts/eval_llm.sh
 
 # Final evaluation
 run_step bash scripts/eval_jga.sh \
@@ -47,7 +48,4 @@ run_step bash scripts/eval_jga.sh \
   runs/t5_mwoz_train_v1/final \
   data_unified/multiwoz24/test.jsonl
 
-# ── LLM zero-shot evaluations ─────────────────────────────────────────────
-# Edit scripts/eval_llm.sh to add/remove models.
-# Requires HF_TOKEN in the environment; skipped gracefully if not set.
-run_step bash scripts/eval_llm.sh
+

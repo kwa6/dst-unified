@@ -20,17 +20,19 @@ def _norm_pred(text: str) -> str:
 
 class LlamaDSTModel:
     """
-    Llama 3.1 Instruct wrapper for DST slot filling.
+    Llama Instruct wrapper for DST slot filling.
 
-    Works for both:
-      - meta-llama/Llama-3.1-70B-Instruct  (~80GB VRAM, 4×A100)
-      - meta-llama/Llama-3.1-8B-Instruct   (~16GB VRAM, 1×A100)
+    Tested with (all use the same chat template):
+      - meta-llama/Llama-3.3-70B-Instruct   (~80GB VRAM, 4×A100)
+      - meta-llama/Llama-3.1-8B-Instruct    (~16GB VRAM, 1×A100)
+      - meta-llama/Llama-3.2-3B-Instruct    (~8GB  VRAM, 1×A100)
+      - meta-llama/Llama-3.2-1B-Instruct    (~4GB  VRAM, CPU ok)
 
-    Requires HuggingFace access to the meta-llama gated repo:
-      https://huggingface.co/meta-llama/Llama-3.1-70B-Instruct
+    Requires HuggingFace access:
+      https://huggingface.co/meta-llama
     """
 
-    DEFAULT_MODEL = "meta-llama/Llama-3.1-70B-Instruct"
+    DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
     def __init__(self, model_name: str | None = None, device: str | None = None):
         self.model_name = model_name or self.DEFAULT_MODEL

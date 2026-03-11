@@ -1,15 +1,17 @@
 """
-Evaluate Llama 3.1 Instruct on the DST task using Joint Goal Accuracy.
+Evaluate Llama Instruct on the DST task using Joint Goal Accuracy.
 
-Works for both:
-  - meta-llama/Llama-3.1-70B-Instruct  (needs 4×A100 on UCloud)
-  - meta-llama/Llama-3.1-8B-Instruct   (needs 1×A100 on UCloud)
+Tested with:
+  - meta-llama/Llama-3.3-70B-Instruct   (needs 4×A100 on UCloud)
+  - meta-llama/Llama-3.1-8B-Instruct    (needs 1×A100 on UCloud)
+  - meta-llama/Llama-3.2-3B-Instruct    (needs 1×A100 on UCloud)
+  - meta-llama/Llama-3.2-1B-Instruct    (runs on CPU)
 
 Usage:
     $env:PYTHONPATH = "src"
     python -m dst.runners.eval_jga_llama `
         --path  data_unified/multiwoz24/val.jsonl `
-        --model meta-llama/Llama-3.1-70B-Instruct
+        --model meta-llama/Llama-3.3-70B-Instruct
 """
 import argparse
 from collections import defaultdict

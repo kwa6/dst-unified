@@ -51,18 +51,7 @@ export HF_TOKEN="${HF_TOKEN:-}"
 export GH_PAT="${GH_PAT:-}"
 
 # Starting pipeline
-run_step bash scripts/setup_env.sh
 run_step bash scripts/pipeline.sh
 
-# ── Optional: push log back to GitHub ─────────────────────────────────────
-if [ -n "${GH_PAT:-}" ]; then
-  LOG_BRANCH="logs/ucloud-$(date +%Y%m%d-%H%M%S)"
-  git config user.email "ucloud@noreply"
-  git config user.name  "UCloud Runner"
-  git checkout -b "$LOG_BRANCH"
-  git add -A
-  git commit -m "UCloud run results $(date -u +%Y-%m-%dT%H:%M:%SZ)" || true
-  git push "https://kwa6:${GH_PAT}@github.com/kwa6/dst-unified.git" "$LOG_BRANCH"
-  echo "Logs pushed to branch: $LOG_BRANCH"
-fi
+
 

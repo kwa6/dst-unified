@@ -16,6 +16,8 @@ Usage:
 import argparse
 from collections import defaultdict
 
+from tqdm import tqdm
+
 from dst.data.jsonl_dataset import iter_jsonl
 from dst.models.prompting import make_prompt_example
 from dst.models.llama_dst import LlamaDSTModel
@@ -53,6 +55,8 @@ def main():
     if args.max_turns is not None:
         turn_keys = turn_keys[: args.max_turns]
 
+    print(f"Evaluating {len(turn_keys)} turns ({sum(len(groups[k]) for k in turn_keys)} slot predictions)...")
+
     # 2) Load model
     model = LlamaDSTModel(args.model)
 
@@ -65,7 +69,7 @@ def main():
     correct_non_none = 0
     mismatches_printed = 0
 
-    for key in turn_keys:
+    for key in tqdm(turn_keys, desc="Turns"):
         rows = groups[key]
         total_turns += 1
 

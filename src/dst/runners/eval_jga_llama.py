@@ -43,6 +43,8 @@ def main():
                     help="Limit number of turns evaluated (debug)")
     ap.add_argument("--print_mismatches", type=int, default=0,
                     help="Print first N incorrect turns")
+    ap.add_argument("--load_in_4bit",    action="store_true",
+                    help="Load base model in 4-bit (needed for large models like 70B)")
     args = ap.parse_args()
 
     # 1) Load and group rows by (dialogue_id, turn_id)
@@ -58,7 +60,7 @@ def main():
     print(f"Evaluating {len(turn_keys)} turns ({sum(len(groups[k]) for k in turn_keys)} slot predictions)...")
 
     # 2) Load model
-    model = LlamaDSTModel(args.model)
+    model = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit)
 
     # 3) Evaluate
     total_turns = 0

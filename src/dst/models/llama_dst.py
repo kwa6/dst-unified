@@ -67,7 +67,7 @@ class LlamaDSTModel:
 
         if lora:
             # LoRA adapter checkpoint — load base model from adapter_config,
-            # then merge adapter weights
+            # then apply adapter weights
             from peft import PeftModel, PeftConfig
             peft_cfg = PeftConfig.from_pretrained(self.model_name)
             base_id = peft_cfg.base_model_name_or_path
@@ -75,7 +75,8 @@ class LlamaDSTModel:
             self.tokenizer = AutoTokenizer.from_pretrained(base_id)
             base_model = AutoModelForCausalLM.from_pretrained(base_id, **load_kwargs)
             self.model = PeftModel.from_pretrained(base_model, self.model_name)
-            self.model = self.model.merge_and_unload()
+            if not load_in_4bit:
+                self.model = self.model.merge_and_unload()
         elif local:
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_name, local_files_only=True

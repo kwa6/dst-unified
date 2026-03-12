@@ -37,7 +37,7 @@ for MODEL in "${LLAMA_MODELS[@]}"; do
     echo "WARNING: eval failed for ${MODEL}, continuing..."
 done
 
-# ── Also eval fine-tuned Llama checkpoint if it exists ────────────────────
+# ── Also eval fine-tuned Llama checkpoints if they exist ──────────────────
 FT_CHECKPOINT="runs/llama_mwoz_v1/final"
 if [ -d "${FT_CHECKPOINT}" ]; then
   echo
@@ -46,6 +46,16 @@ if [ -d "${FT_CHECKPOINT}" ]; then
   echo "=========================================="
   bash scripts/eval_jga_llama.sh "$FT_CHECKPOINT" "$TEST_PATH" || \
     echo "WARNING: fine-tuned eval failed, continuing..."
+fi
+
+FT_CHECKPOINT_70B="runs/llama33_70b_mwoz_v1/final"
+if [ -d "${FT_CHECKPOINT_70B}" ]; then
+  echo
+  echo "=========================================="
+  echo "LLM eval (fine-tuned 4-bit): ${FT_CHECKPOINT_70B}"
+  echo "=========================================="
+  bash scripts/eval_jga_llama.sh "$FT_CHECKPOINT_70B" "$TEST_PATH" 200 --load_in_4bit || \
+    echo "WARNING: fine-tuned 70B eval failed, continuing..."
 fi
 
 echo

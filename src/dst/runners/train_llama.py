@@ -171,7 +171,7 @@ def main():
         model=llama.model,
         args=train_args,
         train_dataset=ds,
-        tokenizer=llama.tokenizer,
+        processing_class=llama.tokenizer,
     )
 
     print("\nStarting LoRA fine-tuning...")

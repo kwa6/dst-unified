@@ -51,8 +51,9 @@ class LlamaDSTModel:
         local = _is_local_model_path(self.model_name)
         lora  = local and _is_lora_checkpoint(self.model_name)
         load_kwargs: dict = dict(
-            torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
+            dtype=torch.float16 if self.device != "cpu" else torch.float32,
             device_map="auto" if self.device != "cpu" else None,
+            low_cpu_mem_usage=True,
         )
 
         if load_in_4bit and self.device != "cpu":

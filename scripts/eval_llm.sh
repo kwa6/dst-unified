@@ -24,7 +24,7 @@ fi
 # ── Model list ─────────────────────────────────────────────────────────────
 # Add or remove models here. Each entry is a HuggingFace model ID.
 LLAMA_MODELS=(
-  "meta-llama/Llama-2-7b-chat-hf"
+  "meta-llama/Llama-3.1-8B-Instruct"
 )
 
 # ── Run evals ─────────────────────────────────────────────────────────────

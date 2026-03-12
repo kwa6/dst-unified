@@ -12,7 +12,7 @@ Usage (UCloud / Linux):
     export PYTHONPATH=src
     python -m dst.runners.train_llama \\
         --train_path data_unified/multiwoz24/train.jsonl \\
-        --model      meta-llama/Llama-2-7b-chat-hf \\
+        --model      meta-llama/Llama-3.1-8B-Instruct \\
         --out_dir    runs/llama_mwoz_v1 \\
         --steps      500
 
@@ -20,7 +20,7 @@ Usage (Windows PowerShell):
     $env:PYTHONPATH = "src"
     python -m dst.runners.train_llama `
         --train_path data_unified/multiwoz24/train.jsonl `
-        --model      meta-llama/Llama-2-7b-chat-hf `
+        --model      meta-llama/Llama-3.1-8B-Instruct `
         --out_dir    runs/llama_mwoz_v1 `
         --steps      500
 """
@@ -126,7 +126,7 @@ class LlamaDSTDataset(torch.utils.data.Dataset):
 def main():
     ap = argparse.ArgumentParser(description="Fine-tune Llama for DST with LoRA.")
     ap.add_argument("--train_path",      default="data_unified/multiwoz24/train.jsonl")
-    ap.add_argument("--model",           default="meta-llama/Llama-2-7b-chat-hf",
+    ap.add_argument("--model",           default="meta-llama/Llama-3.1-8B-Instruct",
                     help="HF model ID or local path")
     ap.add_argument("--out_dir",         default="runs/llama_mwoz_v1")
     ap.add_argument("--limit_read",      type=int, default=None,

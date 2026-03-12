@@ -30,7 +30,7 @@ from pathlib import Path
 
 import torch
 from datasets import Dataset
-from transformers import Trainer, TrainingArguments, DataCollatorWithPadding
+from transformers import Trainer, TrainingArguments
 
 from dst.data.jsonl_dataset import iter_jsonl
 from dst.models.prompting import make_prompt_example
@@ -78,6 +78,27 @@ def make_balanced_dataset(rows: list[dict], total_examples: int, seed: int = 13)
     )
     rng.shuffle(balanced)
     return balanced
+
+
+class CausalLMLeftPadCollator:
+    """Left-pad input_ids, attention_mask, and labels to the longest item in each batch."""
+
+    def __init__(self, pad_token_id: int):
+        self.pad_token_id = pad_token_id
+
+    def __call__(self, features: list[dict]) -> dict:
+        max_len = max(f["input_ids"].shape[0] for f in features)
+        input_ids, attention_mask, labels = [], [], []
+        for f in features:
+            pad_len = max_len - f["input_ids"].shape[0]
+            input_ids.append(torch.cat([torch.full((pad_len,), self.pad_token_id, dtype=f["input_ids"].dtype), f["input_ids"]]))
+            attention_mask.append(torch.cat([torch.zeros(pad_len, dtype=f["attention_mask"].dtype), f["attention_mask"]]))
+            labels.append(torch.cat([torch.full((pad_len,), -100, dtype=f["labels"].dtype), f["labels"]]))
+        return {
+            "input_ids": torch.stack(input_ids),
+            "attention_mask": torch.stack(attention_mask),
+            "labels": torch.stack(labels),
+        }
 
 
 class LlamaDSTDataset(torch.utils.data.Dataset):
@@ -171,7 +192,7 @@ def main():
         model=llama.model,
         args=train_args,
         train_dataset=ds,
-        processing_class=llama.tokenizer,
+        data_collator=CausalLMLeftPadCollator(llama.tokenizer.pad_token_id),
     )
 
     print("\nStarting LoRA fine-tuning...")

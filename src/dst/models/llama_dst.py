@@ -62,7 +62,6 @@ class LlamaDSTModel:
                 bnb_4bit_compute_dtype=torch.float16,
                 bnb_4bit_quant_type="nf4",
             )
-            load_kwargs.pop("torch_dtype", None)
             print("  Loading in 4-bit (QLoRA)")
 
         if lora:

@@ -142,6 +142,8 @@ def main():
     ap.add_argument("--lora_r",          type=int, default=16)
     ap.add_argument("--lora_alpha",      type=int, default=32)
     ap.add_argument("--max_length",      type=int, default=512)
+    ap.add_argument("--load_in_4bit",    action="store_true",
+                    help="Load model in 4-bit quantization (QLoRA, saves VRAM)")
     ap.add_argument("--eval_path",       default=None,
                     help="JSONL validation file for eval during training")
     ap.add_argument("--eval_examples",   type=int, default=500,
@@ -163,7 +165,7 @@ def main():
     print(f"  Balanced set: {len(balanced)}")
 
     # 2) Load base model (inference mode first so LoRA attaches cleanly)
-    llama = LlamaDSTModel(args.model)
+    llama = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit)
 
     # 3) Attach LoRA adapters — only adapter weights will be trained
     llama.prepare_for_training(lora_r=args.lora_r, lora_alpha=args.lora_alpha)

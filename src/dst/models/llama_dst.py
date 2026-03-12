@@ -41,7 +41,7 @@ class LlamaDSTModel:
 
     DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
-    def __init__(self, model_name: str | None = None, device: str | None = None):
+    def __init__(self, model_name: str | None = None, device: str | None = None, load_in_4bit: bool = False):
         self.model_name = model_name or self.DEFAULT_MODEL
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -54,6 +54,17 @@ class LlamaDSTModel:
             dtype=torch.float16 if self.device != "cpu" else torch.float32,
             device_map="auto" if self.device != "cpu" else None,
         )
+
+        if load_in_4bit and self.device != "cpu":
+            from transformers import BitsAndBytesConfig
+            load_kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_quant_type="nf4",
+            )
+            # dtype/device_map handled by BnB
+            load_kwargs.pop("dtype", None)
+            print("  Loading in 4-bit (QLoRA)")
 
         if lora:
             # LoRA adapter checkpoint — load base model from adapter_config,

@@ -27,5 +27,7 @@ python -m dst.runners.train_llama \
   --total_examples  8000 \
   --steps           500 \
   --warmup_steps    50 \
-  --batch_size      2 \
-  --grad_accum      8
+  --batch_size      1 \
+  --grad_accum      16 \
+  --max_length      256 \
+  --load_in_4bit

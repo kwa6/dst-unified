@@ -34,9 +34,9 @@ run_step bash scripts/train_multiwoz.sh
 run_step bash scripts/train_d0t.sh
 run_step bash scripts/train_luas.sh
 
-# Train Llama 3.1 8B with LoRA (only if HF_TOKEN is set — model is gated)
+# Train Llama 3.3 70B with LoRA (only if HF_TOKEN is set — model is gated)
 if [ -n "${HF_TOKEN:-}" ]; then
-  run_step bash scripts/train_llama31_8b.sh
+  run_step bash scripts/train_llama33_70b.sh
 fi
 
 # Final evaluation — T5 fine-tuned models

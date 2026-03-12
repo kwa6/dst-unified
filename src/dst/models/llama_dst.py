@@ -51,7 +51,7 @@ class LlamaDSTModel:
         local = _is_local_model_path(self.model_name)
         lora  = local and _is_lora_checkpoint(self.model_name)
         load_kwargs: dict = dict(
-            dtype=torch.float16 if self.device != "cpu" else torch.float32,
+            torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
             device_map="auto" if self.device != "cpu" else None,
         )
 
@@ -62,8 +62,7 @@ class LlamaDSTModel:
                 bnb_4bit_compute_dtype=torch.float16,
                 bnb_4bit_quant_type="nf4",
             )
-            # dtype/device_map handled by BnB
-            load_kwargs.pop("dtype", None)
+            load_kwargs.pop("torch_dtype", None)
             print("  Loading in 4-bit (QLoRA)")
 
         if lora:
@@ -189,6 +188,8 @@ class LlamaDSTModel:
         )
         self.model = get_peft_model(self.model, lora_cfg)
         self.model.print_trainable_parameters()
+        # Gradient checkpointing reduces activation memory at the cost of speed
+        self.model.gradient_checkpointing_enable()
         self.model.train()
 
     def build_training_batch(

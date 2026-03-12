@@ -65,6 +65,17 @@ class LlamaDSTModel:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
+        # Clean up generation config to avoid warnings:
+        # - remove temperature/top_p (not valid with do_sample=False)
+        # - remove max_length (we use max_new_tokens instead)
+        gc = self.model.generation_config
+        if hasattr(gc, "temperature"):
+            gc.temperature = None
+        if hasattr(gc, "top_p"):
+            gc.top_p = None
+        if hasattr(gc, "max_length"):
+            gc.max_length = None
+
         if self.device == "cpu":
             self.model.to(self.device)
         self.model.eval()

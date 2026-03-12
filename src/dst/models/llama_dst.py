@@ -12,6 +12,12 @@ def _is_local_model_path(name_or_path: str) -> bool:
     return p.exists() and p.is_dir()
 
 
+def _is_lora_checkpoint(path: str) -> bool:
+    """Check if a local directory contains a LoRA adapter (not full weights)."""
+    p = Path(path)
+    return p.is_dir() and (p / "adapter_config.json").exists()
+
+
 def _norm_pred(text: str) -> str:
     text = (text or "").strip().lower()
     if text in {"", "none", "not mentioned", "not given"}:
@@ -43,12 +49,24 @@ class LlamaDSTModel:
         print("Device:", self.device)
 
         local = _is_local_model_path(self.model_name)
+        lora  = local and _is_lora_checkpoint(self.model_name)
         load_kwargs: dict = dict(
             dtype=torch.float16 if self.device != "cpu" else torch.float32,
             device_map="auto" if self.device != "cpu" else None,
         )
 
-        if local:
+        if lora:
+            # LoRA adapter checkpoint — load base model from adapter_config,
+            # then merge adapter weights
+            from peft import PeftModel, PeftConfig
+            peft_cfg = PeftConfig.from_pretrained(self.model_name)
+            base_id = peft_cfg.base_model_name_or_path
+            print(f"  LoRA adapter found — loading base model: {base_id}")
+            self.tokenizer = AutoTokenizer.from_pretrained(base_id)
+            base_model = AutoModelForCausalLM.from_pretrained(base_id, **load_kwargs)
+            self.model = PeftModel.from_pretrained(base_model, self.model_name)
+            self.model = self.model.merge_and_unload()
+        elif local:
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_name, local_files_only=True
             )
@@ -154,8 +172,8 @@ class LlamaDSTModel:
             r=lora_r,
             lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
-            # target the attention projection layers (works for Llama 2 & 3)
-            target_modules=["q_proj", "v_proj"],
+            # target all attention projection layers (works for Llama 2 & 3)
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
             bias="none",
         )
         self.model = get_peft_model(self.model, lora_cfg)

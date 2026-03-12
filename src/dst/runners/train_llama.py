@@ -131,9 +131,10 @@ def main():
     ap.add_argument("--out_dir",         default="runs/llama_mwoz_v1")
     ap.add_argument("--limit_read",      type=int, default=None,
                     help="Cap number of JSONL lines read (debug)")
-    ap.add_argument("--total_examples",  type=int, default=2000,
+    ap.add_argument("--total_examples",  type=int, default=8000,
                     help="Balanced training set size")
     ap.add_argument("--steps",           type=int, default=500)
+    ap.add_argument("--warmup_steps",    type=int, default=50)
     ap.add_argument("--batch_size",      type=int, default=4)
     ap.add_argument("--grad_accum",      type=int, default=4,
                     help="Gradient accumulation steps (effective batch = batch_size × grad_accum)")
@@ -141,6 +142,10 @@ def main():
     ap.add_argument("--lora_r",          type=int, default=16)
     ap.add_argument("--lora_alpha",      type=int, default=32)
     ap.add_argument("--max_length",      type=int, default=512)
+    ap.add_argument("--eval_path",       default=None,
+                    help="JSONL validation file for eval during training")
+    ap.add_argument("--eval_examples",   type=int, default=500,
+                    help="Number of balanced eval examples")
     ap.add_argument("--seed",            type=int, default=13)
     args = ap.parse_args()
 
@@ -166,6 +171,14 @@ def main():
     # 4) Build dataset
     ds = LlamaDSTDataset(balanced, llama, max_length=args.max_length)
 
+    # 4b) Optional eval dataset
+    eval_ds = None
+    if args.eval_path:
+        eval_rows = load_rows(args.eval_path, limit=args.limit_read)
+        eval_balanced = make_balanced_dataset(eval_rows, args.eval_examples, seed=args.seed + 1)
+        eval_ds = LlamaDSTDataset(eval_balanced, llama, max_length=args.max_length)
+        print(f"  Eval set:     {len(eval_balanced)}")
+
     # 5) Training arguments
     fp16 = llama.device != "cpu" and torch.cuda.is_available()
     train_args = TrainingArguments(
@@ -173,10 +186,13 @@ def main():
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.lr,
+        warmup_steps=args.warmup_steps,
         max_steps=args.steps,
         logging_steps=50,
         logging_strategy="steps",
         logging_first_step=True,
+        eval_strategy="steps" if eval_ds else "no",
+        eval_steps=100 if eval_ds else None,
         report_to=[],
         fp16=fp16,
         max_grad_norm=1.0,
@@ -192,6 +208,7 @@ def main():
         model=llama.model,
         args=train_args,
         train_dataset=ds,
+        eval_dataset=eval_ds,
         data_collator=CausalLMLeftPadCollator(llama.tokenizer.pad_token_id),
     )
 

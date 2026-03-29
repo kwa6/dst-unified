@@ -37,6 +37,8 @@ run_step bash scripts/train_luas.sh
 # Train Llama 3.1 8B with LoRA (only if HF_TOKEN is set — model is gated)
 if [ -n "${HF_TOKEN:-}" ]; then
   run_step bash scripts/train_llama31_8b.sh
+  run_step bash scripts/train_llama31_8b_luas.sh
+  run_step bash scripts/train_llama31_8b_d0t.sh
 fi
 
 # Final evaluation — T5 fine-tuned models
@@ -52,7 +54,22 @@ run_step bash scripts/eval_jga.sh \
   runs/t5_mwoz_train_v1/final \
   data_unified/multiwoz24/test.jsonl
 
+# Final evaluation — Llama 3.1 8B fine-tuned models on MultiWOZ test set
+if [ -n "${HF_TOKEN:-}" ]; then
+  run_step bash scripts/eval_jga.sh \
+    runs/llama31_8b_mwoz_v1/final \
+    data_unified/multiwoz24/test.jsonl
+
+  run_step bash scripts/eval_jga.sh \
+    runs/llama31_8b_luas_v1/final \
+    data_unified/multiwoz24/test.jsonl
+
+  run_step bash scripts/eval_jga.sh \
+    runs/llama31_8b_d0t_v1/final \
+    data_unified/multiwoz24/test.jsonl
+fi
+
 # Final evaluation — LLM zero-shot + fine-tuned
-run_step bash scripts/eval_llm.sh
+# run_step bash scripts/eval_llm.sh
 
 

@@ -13,12 +13,13 @@ if [ -z "${HF_TOKEN:-}" ]; then
 fi
 
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
-OUT_DIR="runs/llama31_8b_d0t_v1"
+OUT_DIR="runs/llama31_8b_d0t_v2"
 
 export PYTHONPATH=src
 export HF_TOKEN="$HF_TOKEN"
 python -m dst.runners.train_llama \
   --train_path      data_unified/d0t/train.jsonl \
+  --eval_path       data_unified/multiwoz24/val.jsonl \
   --model           "$MODEL" \
   --out_dir         "$OUT_DIR" \
   --total_examples  8000 \

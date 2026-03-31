@@ -39,6 +39,10 @@ if [ -n "${HF_TOKEN:-}" ]; then
   run_step bash scripts/train_llama31_8b.sh
   run_step bash scripts/train_llama31_8b_luas.sh
   run_step bash scripts/train_llama31_8b_d0t.sh
+
+  run_step bash scripts/train_llama33_70b.sh
+  run_step bash scripts/train_llama33_70b_luas.sh
+  run_step bash scripts/train_llama33_70b_d0t.sh
 fi
 
 # Final evaluation — T5 fine-tuned models
@@ -56,17 +60,32 @@ run_step bash scripts/eval_jga.sh \
 
 # Final evaluation — Llama 3.1 8B fine-tuned models on MultiWOZ test set
 if [ -n "${HF_TOKEN:-}" ]; then
-  run_step bash scripts/eval_jga.sh \
+  run_step bash scripts/eval_jga_llama.sh \
     runs/llama31_8b_mwoz_v1/final \
     data_unified/multiwoz24/test.jsonl
 
-  run_step bash scripts/eval_jga.sh \
+  run_step bash scripts/eval_jga_llama.sh \
     runs/llama31_8b_luas_v1/final \
     data_unified/multiwoz24/test.jsonl
 
-  run_step bash scripts/eval_jga.sh \
+  run_step bash scripts/eval_jga_llama.sh \
     runs/llama31_8b_d0t_v1/final \
     data_unified/multiwoz24/test.jsonl
+
+  run_step bash scripts/eval_jga_llama.sh \
+    runs/llama33_70b_mwoz_v1/final \
+    data_unified/multiwoz24/test.jsonl \
+    200 --load_in_4bit
+
+  run_step bash scripts/eval_jga_llama.sh \
+    runs/llama33_70b_luas_v1/final \
+    data_unified/multiwoz24/test.jsonl \
+    200 --load_in_4bit
+
+  run_step bash scripts/eval_jga_llama.sh \
+    runs/llama33_70b_d0t_v1/final \
+    data_unified/multiwoz24/test.jsonl \
+    200 --load_in_4bit
 fi
 
 # Final evaluation — LLM zero-shot + fine-tuned

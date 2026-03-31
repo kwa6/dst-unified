@@ -12,6 +12,18 @@ def _is_local_model_path(name_or_path: str) -> bool:
     return p.exists() and p.is_dir()
 
 
+def _looks_like_local_path(name_or_path: str) -> bool:
+    p = Path(name_or_path)
+    if p.is_absolute():
+        return True
+    if name_or_path.startswith(("./", "../", "~/")):
+        return True
+    # HF repo IDs allow at most one slash: namespace/repo_name
+    if name_or_path.count("/") >= 2:
+        return True
+    return False
+
+
 def _is_lora_checkpoint(path: str) -> bool:
     """Check if a local directory contains a LoRA adapter (not full weights)."""
     p = Path(path)
@@ -48,7 +60,7 @@ class LlamaDSTModel:
         print("Loading model:", self.model_name)
         print("Device:", self.device)
 
-        local = _is_local_model_path(self.model_name)
+        local = _is_local_model_path(self.model_name) or _looks_like_local_path(self.model_name)
         lora  = local and _is_lora_checkpoint(self.model_name)
         load_kwargs: dict = dict(
             dtype=torch.float16 if self.device != "cpu" else torch.float32,
@@ -78,12 +90,18 @@ class LlamaDSTModel:
             if not load_in_4bit:
                 self.model = self.model.merge_and_unload()
         elif local:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name, local_files_only=True
-            )
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name, local_files_only=True, **load_kwargs
-            )
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(
+                    self.model_name, local_files_only=True
+                )
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name, local_files_only=True, **load_kwargs
+                )
+            except OSError as e:
+                raise OSError(
+                    f"Local model path not found or incomplete: {self.model_name}. "
+                    "Expected a local folder containing tokenizer/model files or LoRA adapter files."
+                ) from e
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             self.model = AutoModelForCausalLM.from_pretrained(

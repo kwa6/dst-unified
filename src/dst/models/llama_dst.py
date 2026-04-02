@@ -8,7 +8,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
 def _is_local_model_path(name_or_path: str) -> bool:
-    p = Path(name_or_path)
+    p = Path(name_or_path).resolve()
     return p.exists() and p.is_dir()
 
 
@@ -22,6 +22,14 @@ def _looks_like_local_path(name_or_path: str) -> bool:
     if name_or_path.count("/") >= 2:
         return True
     return False
+
+
+def _resolve_model_path(name_or_path: str) -> str:
+    """Convert relative paths to absolute paths for robustness."""
+    p = Path(name_or_path)
+    if not p.is_absolute():
+        p = p.resolve()
+    return str(p)
 
 
 def _is_lora_checkpoint(path: str) -> bool:
@@ -59,6 +67,13 @@ class LlamaDSTModel:
 
         print("Loading model:", self.model_name)
         print("Device:", self.device)
+
+        # Detect and resolve local model paths
+        is_local = _is_local_model_path(self.model_name) or _looks_like_local_path(self.model_name)
+        if is_local and not self.model_name.startswith(("meta-llama/", "microsoft/", "facebook/")):
+            # Resolve relative paths to absolute paths for robustness
+            self.model_name = _resolve_model_path(self.model_name)
+            print(f"Resolved local path to: {self.model_name}")
 
         local = _is_local_model_path(self.model_name) or _looks_like_local_path(self.model_name)
         lora  = local and _is_lora_checkpoint(self.model_name)

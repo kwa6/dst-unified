@@ -45,6 +45,8 @@ def main():
                     help="Print first N incorrect turns")
     ap.add_argument("--load_in_4bit",    action="store_true",
                     help="Load base model in 4-bit (needed for large models like 70B)")
+    ap.add_argument("--force_cuda",      action="store_true",
+                    help="Force CUDA usage even if torch.cuda.is_available() returns False (for old drivers on UCloud)")
     args = ap.parse_args()
 
     # 1) Load and group rows by (dialogue_id, turn_id)
@@ -60,7 +62,7 @@ def main():
     print(f"Evaluating {len(turn_keys)} turns ({sum(len(groups[k]) for k in turn_keys)} slot predictions)...")
 
     # 2) Load model
-    model = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit)
+    model = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit, force_cuda=args.force_cuda)
 
     # 3) Evaluate
     total_turns = 0

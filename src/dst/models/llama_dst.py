@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import os
+import warnings
 from pathlib import Path
 from typing import List, Dict
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+
+# Suppress CUDA initialization warnings (common with older drivers on UCloud)
+warnings.filterwarnings("ignore", message=".*CUDA initialization.*")
 
 
 def _is_local_model_path(name_or_path: str) -> bool:
@@ -61,9 +66,22 @@ class LlamaDSTModel:
 
     DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
-    def __init__(self, model_name: str | None = None, device: str | None = None, load_in_4bit: bool = False):
+    def __init__(self, model_name: str | None = None, device: str | None = None, load_in_4bit: bool = False, force_cuda: bool = False):
         self.model_name = model_name or self.DEFAULT_MODEL
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Determine device: explicit > force_cuda > auto-detect
+        if device:
+            self.device = device
+        elif force_cuda:
+            self.device = "cuda"
+        else:
+            # Try to detect CUDA, but handle old driver gracefully
+            try:
+                cuda_available = torch.cuda.is_available()
+            except Exception:
+                # CUDA initialization might fail with very old drivers
+                cuda_available = False
+            self.device = "cuda" if cuda_available else "cpu"
 
         print("Loading model:", self.model_name)
         print("Device:", self.device)

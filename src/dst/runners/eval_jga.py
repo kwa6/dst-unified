@@ -1,4 +1,5 @@
 import argparse
+import sys
 from collections import defaultdict
 
 from dst.data.jsonl_dataset import iter_jsonl
@@ -51,6 +52,11 @@ def main():
     for key in turn_keys:
         rows = groups[key]
         total_turns += 1
+
+        # Print progress every 20 turns to keep connection alive
+        if total_turns % 20 == 0:
+            print(f"Progress: {total_turns}/{len(turn_keys)} turns evaluated...", file=sys.stderr)
+            sys.stderr.flush()
 
         turn_all_correct = True
         turn_mismatches = []

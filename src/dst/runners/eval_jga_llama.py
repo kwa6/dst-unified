@@ -14,6 +14,7 @@ Usage:
         --model meta-llama/Llama-3.3-70B-Instruct
 """
 import argparse
+import sys
 from collections import defaultdict
 
 from tqdm import tqdm
@@ -76,6 +77,13 @@ def main():
     for key in tqdm(turn_keys, desc="Turns"):
         rows = groups[key]
         total_turns += 1
+
+        # Print periodic progress to keep connection alive
+        if total_turns % 10 == 0:
+            current_jga = (correct_turns / total_turns) if total_turns > 0 else 0.0
+            print(f"[{total_turns}/{len(turn_keys)}] JGA={current_jga:.4f}, Slot Acc={correct_slots/total_slots if total_slots > 0 else 0:.4f}", 
+                  file=sys.stderr)
+            sys.stderr.flush()
 
         turn_all_correct = True
         turn_mismatches = []

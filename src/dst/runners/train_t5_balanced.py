@@ -1,5 +1,6 @@
 import argparse
 import random
+import sys
 from pathlib import Path
 
 import torch
@@ -77,9 +78,20 @@ def main():
     ap.add_argument("--model_name", default="google/flan-t5-base")
     ap.add_argument("--limit_read", type=int, default=None, help="How many JSONL lines to read before balancing")
     ap.add_argument("--total_examples", type=int, default=400, help="Size of balanced training set")
-    ap.add_argument("--steps", type=int, default=200)
+    ap.add_argument("--steps", type=int, default=500, help="Training steps (increased from 200)")
+    ap.add_argument("--warmup_steps", type=int, default=50, help="Warmup steps for learning rate scheduler")
+    ap.add_argument("--eval_path", default=None, help="JSONL file for evaluation during training")
     ap.add_argument("--seed", type=int, default=13)
     args = ap.parse_args()
+    
+    # GPU requirement check: fail fast if CUDA is not available
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "ERROR: GPU (CUDA) is required for training but is not available.\n"
+            "  - Check that you have a GPU device\n"
+            "  - Verify CUDA drivers are installed: nvidia-smi\n"
+            "  - Ensure PyTorch was installed with CUDA support"
+        )
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -96,37 +108,41 @@ def main():
     print("Loading model/tokenizer...")
     tok = AutoTokenizer.from_pretrained(args.model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(args.model_name)
-    
-    print(f"CUDA available: {torch.cuda.is_available()}")
-    print(f"Model device: {model.device}")
-    if torch.cuda.is_available():
-        model = model.to("cuda")
-        print("Model moved to CUDA")
-        print(f"Model device after move: {model.device}")
-    else:
-        print("Using CPU")
+    model = model.to("cuda")
+    print(f"Model loaded and moved to CUDA")
 
     preprocess = make_preprocess_fn(tok)
     ds_tok = ds.map(preprocess, batched=True, remove_columns=ds.column_names)
 
     collator = DataCollatorForSeq2Seq(tokenizer=tok, model=model)
-    # fp16 = torch.cuda.is_available()
-    # fp16 often causes NaNs in this environment; keep training in fp32 for stability
-    fp16 = True
+    
+    # Build optional eval dataset
+    eval_ds = None
+    if args.eval_path:
+        eval_rows = load_rows(args.eval_path)
+        eval_ds = make_balanced_dataset(eval_rows, total_examples=min(200, len(eval_rows)), seed=args.seed + 1)
+        preprocess = make_preprocess_fn(tok)
+        eval_ds = eval_ds.map(preprocess, batched=True, remove_columns=eval_ds.column_names)
+        print(f"Eval dataset loaded: {len(eval_ds)} examples")
     
     train_args = TrainingArguments(
         output_dir=str(out_dir),
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=1,
+        per_device_train_batch_size=8,
+        gradient_accumulation_steps=2,
         learning_rate=2e-4,
+        warmup_steps=args.warmup_steps,
         max_steps=args.steps,
-        logging_steps=50,
+        logging_steps=20,
         logging_strategy="steps",
         logging_first_step=True,
+        eval_strategy="steps" if eval_ds else "no",
+        eval_steps=100 if eval_ds else None,
+        save_strategy="steps",
+        save_steps=100,
+        load_best_model_at_end=True if eval_ds else False,
         report_to=[],
         fp16=True,
         max_grad_norm=1.0,
-        save_strategy="no",
         dataloader_num_workers=0,
         dataloader_pin_memory=True,
         optim="adamw_torch",
@@ -137,9 +153,17 @@ def main():
         model=model,
         args=train_args,
         train_dataset=ds_tok,
+        eval_dataset=eval_ds,
         data_collator=collator,
     )
 
+    print(f"\nTraining Configuration:")
+    print(f"  Batch size: 8 × {train_args.gradient_accumulation_steps} (effective = 16)")
+    print(f"  Max steps: {args.steps}")
+    print(f"  Warmup steps: {args.warmup_steps}")
+    print(f"  Learning rate: {train_args.learning_rate}")
+    print(f"  Checkpointing: every {train_args.save_steps} steps")
+    print()
     print("Training...")
     trainer.train()
 

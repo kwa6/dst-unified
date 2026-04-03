@@ -151,6 +151,15 @@ def main():
     ap.add_argument("--seed",            type=int, default=13)
     args = ap.parse_args()
 
+    # GPU requirement check: fail fast if CUDA is not available
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "ERROR: GPU (CUDA) is required for training but is not available.\n"
+            "  - Check that you have a GPU device\n"
+            "  - Verify CUDA drivers are installed: nvidia-smi\n"
+            "  - Ensure PyTorch was installed with CUDA support"
+        )
+
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 

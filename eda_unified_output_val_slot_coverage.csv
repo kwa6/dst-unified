@@ -1,6 +1,0 @@
-slot_name,example_count,datasets,splits
-restaurant-area,7374,multiwoz24,val
-restaurant-food,7374,multiwoz24,val
-restaurant-pricerange,7374,multiwoz24,val
-hotel-area,7374,multiwoz24,val
-hotel-pricerange,7374,multiwoz24,val

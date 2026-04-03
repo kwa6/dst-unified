@@ -83,6 +83,16 @@ class LlamaDSTModel:
                 cuda_available = False
             self.device = "cuda" if cuda_available else "cpu"
 
+        # Enforce GPU requirement: fail fast if CUDA is not available
+        if self.device == "cpu":
+            raise RuntimeError(
+                "ERROR: GPU (CUDA) is required for training but is not available.\n"
+                "  - Check that you have a GPU device\n"
+                "  - Verify CUDA drivers are installed: nvidia-smi\n"
+                "  - Ensure PyTorch was installed with CUDA support\n"
+                "  - CPU training is not supported for performance reasons"
+            )
+
         print("Loading model:", self.model_name)
         print("Device:", self.device)
 

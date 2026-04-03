@@ -22,9 +22,9 @@ slot_states_filled,325002
 slot_states_filled_pct,100.00
 value_alignment_none,0
 value_alignment_non_none_total,325002
-value_alignment_exact,0
-value_alignment_exact_pct,0.00
-value_alignment_normalized,0
-value_alignment_normalized_pct,0.00
-value_alignment_not_aligned,325002
-value_alignment_not_aligned_pct,100.00
+value_alignment_exact,509
+value_alignment_exact_pct,0.16
+value_alignment_normalized,127384
+value_alignment_normalized_pct,39.19
+value_alignment_not_aligned,197109
+value_alignment_not_aligned_pct,60.65

@@ -200,7 +200,7 @@ def parse_d0t(base_dir: Path):
     turns_by_dialogue = defaultdict(list)
     turns_by_id = {}
     turn_text = {}  # Store text for each turn
-    dialogue_texts = defaultdict(list)  # Store all user texts per dialogue
+    dialogue_texts = defaultdict(list)  # Store all dialogue texts (all speakers)
     
     with turn_csv.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -220,9 +220,8 @@ def parse_d0t(base_dir: Path):
             }
             text = row.get("text", "").lower()
             turn_text[turn_id] = text
-            # Store user text per dialogue
-            if speaker == "user":
-                dialogue_texts[dialogue_id].append(text)
+            # Store all dialogue text (D0T doesn't have clear user/system, so include all)
+            dialogue_texts[dialogue_id].append(text)
             turns_by_dialogue[dialogue_id].append((int(row["turn_index"]), speaker))
     
     # Count unique dialogues per split

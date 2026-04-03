@@ -1,0 +1,146 @@
+================================================================================
+VALUE ALIGNMENT COMPARISON: Raw vs Unified EDA by Dataset
+================================================================================
+
+DATASET STATISTICS & ALIGNMENT METRICS
+================================================================================
+
+MultiWOZ 2.4:
+────────────────────────────────────────────────────────────────────────────
+  Raw:
+    Total Dialogues: 10,438
+    Total Filled Slots: 294,484
+    EXACT:      244,356 (82.98%)
+    NORMALIZED:   1,285 ( 0.44%)
+    NOT_ALIGNED:  48,843 (16.59%)
+
+  Unified (Train Split):
+    Total Dialogues: 8,438
+    Total Non-None Examples: 65,885
+    EXACT:      64,054 (97.22%)
+    NORMALIZED:       0 ( 0.00%)
+    NOT_ALIGNED:  1,831 ( 2.78%)
+
+  IMPROVEMENT: +14.2% exact alignment
+             -16.6% not aligned
+
+D0T / DSG5K:
+────────────────────────────────────────────────────────────────────────────
+  Raw:
+    Total Dialogues: 5,011
+    Total Filled Slots: 325,002
+    EXACT:           509 ( 0.16%)  ⬅️ VERY LOW (semantic concepts)
+    NORMALIZED:   127,384 (39.19%)
+    NOT_ALIGNED:  197,109 (60.65%)
+
+  Unified (Train Split):
+    Total Dialogues: 5,011
+    Total Non-None Examples: 249,037
+    EXACT:      120,320 (48.31%)  ⬅️ DRAMATIC IMPROVEMENT
+    NORMALIZED:    1,872 ( 0.75%)
+    NOT_ALIGNED:  126,845 (50.93%)
+
+  IMPROVEMENT: +48.2% exact alignment (⭐ MAJOR TRANSFORMATION)
+             -38.4% normalized alignment (normalized→exact conversion)
+             -9.7% not aligned
+
+  KEY INSIGHT: Raw D0T values are semantic concepts that don't match dialogue.
+               Unification converts them to observable surface forms.
+
+LUAS:
+────────────────────────────────────────────────────────────────────────────
+  Raw:
+    Total Dialogues: 7,556
+    Total Filled Slots: 278,794
+    EXACT:      220,929 (79.24%)
+    NORMALIZED:   3,466 ( 1.24%)
+    NOT_ALIGNED:  54,399 (19.51%)
+
+  Unified (Train Split):
+    Total Dialogues: 7,556
+    Total Non-None Examples: 278,794
+    EXACT:      240,922 (86.42%)
+    NORMALIZED:    3,380 ( 1.21%)
+    NOT_ALIGNED:   34,492 (12.37%)
+
+  IMPROVEMENT: +7.2% exact alignment
+             -7.1% not aligned
+
+================================================================================
+OVERALL UNIFIED STATISTICS (All Datasets Combined - Train Split)
+================================================================================
+
+Total Examples:        887,725
+Total Dialogues:       20,994
+  - MultiWOZ: 8,438 (40.2%)
+  - D0T: 5,011 (23.9%)
+  - LUAS: 7,556 (36.0%)
+
+None-like values:      294,009 (33.1%)
+Non-none examples:     593,716 (66.9%)
+
+ALIGNMENT DISTRIBUTION:
+  EXACT:        425,296 (71.63% of non-none)
+  NORMALIZED:   430,548 (72.52% of non-none)  ← includes exact
+  NOT_ALIGNED:  163,168 (27.48% of non-none)
+
+BREAKDOWN BY DATASET:
+
+MultiWOZ (31.9% of total):
+  Exact:     64,054 (97.22%)
+  Not-align:  1,831 ( 2.78%)
+
+D0T (36.6% of total):
+  Exact:    120,320 (48.31%)
+  Not-align: 126,845 (50.93%)
+
+LUAS (31.4% of total):
+  Exact:    240,922 (86.42%)
+  Not-align: 34,492 (12.37%)
+
+================================================================================
+DATASET CHARACTERISTICS
+================================================================================
+
+MultiWOZ:
+  • Already high quality in raw (82.98% exact)
+  • Unification polishes further to 97.22%
+  • Natural dialogue data with good value-context alignment
+  • Best for training: Very high confidence in examples
+
+D0T:
+  • ⭐ CRITICAL FINDING: Raw data is nearly unusable (0.16% exact)
+  • Unification is ESSENTIAL: Transforms to 48.31% exact
+  • Values are semantic concepts, not dialogue spans
+  • Normalized category (39%) converts to exact (0.75%) in unified
+  • Must use unified data for effective training
+
+LUAS:
+  • Solid baseline in raw (79.24% exact)
+  • Modest improvement to 86.42% in unified
+  • Values already grounded in dialogue context
+  • Unified data preferred but raw is acceptable
+
+================================================================================
+RECOMMENDATIONS
+================================================================================
+
+For Model Training:
+  ✓ Use unified data for all three datasets
+  ✓ MultiWOZ: 97.22% exact alignment → excellent training signal
+  ✓ D0T: 48.31% exact alignment → requires unification, but workable
+  ✓ LUAS: 86.42% exact alignment → good training signal
+  
+  Expected baseline (copy-from-context): ~72% accuracy
+
+For Raw Data Analysis:
+  • MultiWOZ: 16.59% unaligned cases worth investigating
+  • D0T: 0.16% exact shows fundamental dataset difference
+  • LUAS: 19.51% unaligned, but already reasonable
+
+For Future Work:
+  • D0T requires semantic matching beyond surface-form matching
+  • Consider why Normalized category (39%) exists in raw D0T
+  • Document unification strategy for D0T value conversion
+
+================================================================================

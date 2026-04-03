@@ -1,33 +1,43 @@
 metric,value
-examples,278818
-dialogues,7556
-examples_per_dialogue_avg,36.90
-unique_slots,31
-target_none,24
-target_none_pct,0.01
-target_filled,278794
-target_filled_pct,99.99
-context_length_min,51
-context_length_p25,561
-context_length_median,970
-context_length_p75,1529
-context_length_max,4768
-context_length_mean,1111
+examples,887725
+dialogues,21005
+examples_per_dialogue_avg,42.26
+unique_slots,173603
+target_none,294009
+target_none_pct,33.12
+target_filled,593716
+target_filled_pct,66.88
+context_length_min,22
+context_length_p25,487
+context_length_median,938
+context_length_p75,1571
+context_length_max,8162
+context_length_mean,1140
 ,
 VALUE_ALIGNMENT_LAYERED,
 ,"Per-example, using dialogue_context model receives"
 ,
 OVERALL,
-none_examples,24
-non_none_examples,278794
-exact_count,240922
-exact_pct,86.42
-normalized_count,244302
-normalized_pct,87.63
-not_aligned_count,34492
-not_aligned_pct,12.37
+none_examples,294009
+non_none_examples,593716
+exact_count,425296
+exact_pct,71.63
+normalized_count,430548
+normalized_pct,72.52
+not_aligned_count,163168
+not_aligned_pct,27.48
 ,
 BY_DATASET,
+,
+dataset_d0t,
+  none,75965
+  non_none_total,249037
+  exact,120320
+  exact_pct,48.31
+  normalized,1872
+  normalized_pct,0.75
+  not_aligned,126845
+  not_aligned_pct,50.93
 ,
 dataset_luas,
   none,24
@@ -38,3 +48,13 @@ dataset_luas,
   normalized_pct,1.21
   not_aligned,34492
   not_aligned_pct,12.37
+,
+dataset_multiwoz24,
+  none,218020
+  non_none_total,65885
+  exact,64054
+  exact_pct,97.22
+  normalized,0
+  normalized_pct,0.00
+  not_aligned,1831
+  not_aligned_pct,2.78

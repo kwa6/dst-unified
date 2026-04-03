@@ -518,8 +518,8 @@ def main():
     ap.add_argument(
         "--dataset",
         type=str,
-        default="multiwoz24",
-        help="Dataset prefix (default: multiwoz24)",
+        default=None,
+        help="Specific dataset prefix (if None, loads all available datasets)",
     )
     ap.add_argument(
         "--base-dir",
@@ -541,23 +541,45 @@ def main():
     )
     
     args = ap.parse_args()
+    base_dir = Path(args.base_dir)
     
-    jsonl_path = args.base_dir / args.dataset / f"{args.split}.jsonl"
+    # If dataset specified, use that single dataset
+    if args.dataset:
+        datasets_to_process = [args.dataset]
+    else:
+        # Auto-discover datasets in base_dir
+        datasets_to_process = []
+        if base_dir.exists():
+            for item in base_dir.iterdir():
+                if item.is_dir() and (item / f"{args.split}.jsonl").exists():
+                    datasets_to_process.append(item.name)
+        datasets_to_process.sort()
     
-    if not jsonl_path.exists():
-        print(f"Error: {jsonl_path} not found")
+    if not datasets_to_process:
+        print(f"Error: No datasets found in {base_dir}")
         return
     
-    print(f"Loading examples from: {jsonl_path}")
-    examples = load_jsonl(jsonl_path, limit=args.limit)
+    print(f"Processing datasets: {', '.join(datasets_to_process)} (split: {args.split})")
     
-    if not examples:
+    all_examples = []
+    for dataset_name in datasets_to_process:
+        jsonl_path = base_dir / dataset_name / f"{args.split}.jsonl"
+        
+        if not jsonl_path.exists():
+            print(f"  Warning: {jsonl_path} not found, skipping")
+            continue
+        
+        print(f"  Loading {dataset_name} from: {jsonl_path}")
+        examples = load_jsonl(jsonl_path, limit=args.limit)
+        all_examples.extend(examples)
+    
+    if not all_examples:
         print("No examples found!")
         return
     
-    print(f"Loaded {len(examples)} examples")
+    print(f"\nLoaded {len(all_examples)} total examples across all datasets")
     
-    eda = compute_eda(examples, dataset_name=args.dataset)
+    eda = compute_eda(all_examples, dataset_name="unified")
     print_eda(eda, split_name=args.split)
     
     if args.csv_prefix:

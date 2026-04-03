@@ -1,0 +1,7 @@
+dataset,metric_category,exact_pct,normalized_pct,not_aligned_pct,exact_count,normalized_count,not_aligned_count,total_filled,data_type
+MultiWOZ,raw,82.98,0.44,16.59,244356,1285,48843,294484,raw_parsing
+D0T,raw,0.16,39.19,60.65,509,127384,197109,325002,raw_parsing
+LUAS,raw,79.24,1.24,19.51,220929,3466,54399,278794,raw_parsing
+MultiWOZ,unified_train,97.22,0.00,2.78,64054,0,1831,65885,unified_processed
+D0T,unified_train,48.31,0.75,50.93,120320,1872,126845,249037,unified_processed
+LUAS,unified_train,86.42,1.21,12.37,240922,3380,34492,278794,unified_processed

@@ -14,8 +14,11 @@ Usage:
         --model meta-llama/Llama-3.3-70B-Instruct
 """
 import argparse
+import csv
 import sys
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
 
 from tqdm import tqdm
 
@@ -48,6 +51,7 @@ def main():
                     help="Load base model in 4-bit (needed for large models like 70B)")
     ap.add_argument("--force_cuda",      action="store_true",
                     help="Force CUDA usage even if torch.cuda.is_available() returns False (for old drivers on UCloud)")
+    ap.add_argument("--results_file", default="results.csv", help="CSV file to log results (default: results.csv)")
     args = ap.parse_args()
 
     # 1) Load and group rows by (dialogue_id, turn_id)
@@ -125,6 +129,22 @@ def main():
     print(f"turns: {correct_turns}/{total_turns}  JGA={jga:.4f}")
     print(f"slots: {correct_slots}/{total_slots}  slot_acc={slot_acc:.4f}")
     print(f"non-none: {correct_non_none}/{total_non_none}  non_none_acc={non_none_acc:.4f}")
+    
+    # Log results to CSV
+    results_path = Path(args.results_file)
+    file_exists = results_path.exists()
+    
+    with open(results_path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(['timestamp', 'model', 'dataset', 'jga', 'slot_acc', 'non_none_acc'])
+        
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        model_name = Path(args.model).name
+        dataset_name = Path(args.path).stem
+        writer.writerow([timestamp, model_name, dataset_name, f'{jga:.4f}', f'{slot_acc:.4f}', f'{non_none_acc:.4f}'])
+    
+    print(f"\nResults saved to: {args.results_file}")
 
 
 if __name__ == "__main__":

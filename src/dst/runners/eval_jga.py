@@ -1,6 +1,9 @@
 import argparse
+import csv
 import sys
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
 
 from tqdm import tqdm
 
@@ -23,6 +26,7 @@ def main():
     ap.add_argument("--limit", type=int, default=None, help="Limit number of JSONL rows (debug)")
     ap.add_argument("--max_turns", type=int, default=None, help="Limit number of turns (debug)")
     ap.add_argument("--print_mismatches", type=int, default=0, help="Print first N incorrect turns")
+    ap.add_argument("--results_file", default="results.csv", help="CSV file to log results (default: results.csv)")
     args = ap.parse_args()
 
     # 1) Load rows and group by (dialogue_id, turn_id)
@@ -103,6 +107,22 @@ def main():
     print(f"turns: {correct_turns}/{total_turns}  JGA={jga:.4f}")
     print(f"slots: {correct_slots}/{total_slots} slot_acc={slot_acc:.4f}")
     print(f"non-none: {correct_non_none}/{total_non_none} non_none_acc={non_none_acc:.4f}")
+    
+    # Log results to CSV
+    results_path = Path(args.results_file)
+    file_exists = results_path.exists()
+    
+    with open(results_path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(['timestamp', 'model', 'dataset', 'jga', 'slot_acc', 'non_none_acc'])
+        
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        model_name = Path(args.model).name
+        dataset_name = Path(args.path).stem
+        writer.writerow([timestamp, model_name, dataset_name, f'{jga:.4f}', f'{slot_acc:.4f}', f'{non_none_acc:.4f}'])
+    
+    print(f"\nResults saved to: {args.results_file}")
 
 
 if __name__ == "__main__":

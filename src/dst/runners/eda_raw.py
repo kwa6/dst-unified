@@ -18,10 +18,50 @@ import argparse
 import csv
 import json
 import re
+import string
 from collections import Counter, defaultdict
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+
+# ============================================================================
+# VALUE ALIGNMENT HELPERS (Same as eda_unified.py)
+# ============================================================================
+
+NONE_LIKE = {"none", "empty", "not mentioned", "not given", "dontcare", "?", ""}
+
+def normalize_value(value: str) -> str:
+    """Normalize value: lowercase, remove punctuation, normalize whitespace."""
+    if not value:
+        return ""
+    v = value.strip().lower()
+    v = v.translate(str.maketrans('', '', string.punctuation))
+    v = " ".join(v.split())
+    return v
+
+def categorize_alignment(value: str, context: str) -> str:
+    """
+    Categorize alignment into: "none", "exact", "normalized", or "not_aligned"
+    """
+    v_lower = value.lower().strip()
+    
+    if v_lower in NONE_LIKE:
+        return "none"
+    
+    # Exact match (substring, case-insensitive)
+    if not value or not context:
+        return "not_aligned"
+    if value.lower() in context.lower():
+        return "exact"
+    
+    # Normalized match
+    v_norm = normalize_value(value)
+    ctx_norm = normalize_value(context)
+    if v_norm and v_norm in ctx_norm:
+        return "normalized"
+    
+    return "not_aligned"
 
 
 # ============================================================================
@@ -63,6 +103,9 @@ def parse_multiwoz(data_path: Path, val_path: Path, test_path: Path):
     slot_total_seen = Counter()
     slot_value_examples = defaultdict(lambda: defaultdict(int))
     
+    # Layered value alignment tracking
+    slot_alignment_categories = defaultdict(Counter)  # slot -> {category -> count}
+    
     none_like = {"", "none", "not mentioned", "not given"}
     dontcare_like = {"dontcare", "dont care", "don't care", "do not care"}
     
@@ -70,6 +113,13 @@ def parse_multiwoz(data_path: Path, val_path: Path, test_path: Path):
         log = d.get("log", [])
         turns_per_dialogue.append(len(log))
         n_turns += len(log)
+        
+        # Build full dialogue user text (dialogue context)
+        dialogue_user_text = " ".join(
+            turn.get("text", "").lower() 
+            for t_idx, turn in enumerate(log) 
+            if t_idx % 2 == 0  # User turns only
+        )
         
         for t_idx, turn in enumerate(log):
             if t_idx % 2 == 0:
@@ -107,6 +157,10 @@ def parse_multiwoz(data_path: Path, val_path: Path, test_path: Path):
                         slot_observed_count[s] += 1
                     else:
                         slot_observed_count[s] += 1
+                    
+                    # Layered alignment categorization
+                    alignment_cat = categorize_alignment(v, dialogue_user_text)
+                    slot_alignment_categories[s][alignment_cat] += 1
     
     return {
         "n_dialogues": len(all_ids),
@@ -123,6 +177,7 @@ def parse_multiwoz(data_path: Path, val_path: Path, test_path: Path):
         "slot_dontcare_count": slot_dontcare_count,
         "slot_total_seen": slot_total_seen,
         "slot_value_examples": slot_value_examples,
+        "slot_alignment_categories": dict(slot_alignment_categories),
     }
 
 
@@ -140,10 +195,12 @@ def parse_d0t(base_dir: Path):
     if not turn_csv.exists():
         raise FileNotFoundError(f"D0T turn.csv not found at {turn_csv}")
     
-    # Load turns
+    # Load turns with text
     dialogues_by_split = {"train": 0, "val": 0, "test": 0}
     turns_by_dialogue = defaultdict(list)
     turns_by_id = {}
+    turn_text = {}  # Store text for each turn
+    dialogue_texts = defaultdict(list)  # Store all user texts per dialogue
     
     with turn_csv.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -154,13 +211,19 @@ def parse_d0t(base_dir: Path):
             if split not in dialogues_by_split:
                 split = "train"
             
+            speaker = row.get("speaker", "system").lower()
             turns_by_id[turn_id] = {
                 "dialogue": dialogue_id,
                 "turn_index": int(row["turn_index"]),
-                "speaker": row.get("speaker", "system").lower(),
+                "speaker": speaker,
                 "split": split,
             }
-            turns_by_dialogue[dialogue_id].append((int(row["turn_index"]), row.get("speaker", "system").lower()))
+            text = row.get("text", "").lower()
+            turn_text[turn_id] = text
+            # Store user text per dialogue
+            if speaker == "user":
+                dialogue_texts[dialogue_id].append(text)
+            turns_by_dialogue[dialogue_id].append((int(row["turn_index"]), speaker))
     
     # Count unique dialogues per split
     for dialogue_id, turns in turns_by_dialogue.items():
@@ -191,6 +254,9 @@ def parse_d0t(base_dir: Path):
     slot_dontcare_count = Counter()
     slot_total_seen = Counter()
     slot_value_examples = defaultdict(lambda: defaultdict(int))
+    
+    # Layered value alignment tracking
+    slot_alignment_categories = defaultdict(Counter)  # slot -> {category -> count}
     
     none_like = {"", "?", "none", "not mentioned", "not given"}
     dontcare_like = {"dontcare", "dont care", "don't care"}
@@ -225,6 +291,11 @@ def parse_d0t(base_dir: Path):
                     slot_observed_count[slot_name] += 1
                 else:
                     slot_observed_count[slot_name] += 1
+                
+                # Layered alignment categorization
+                dialogue_user_text = " ".join(dialogue_texts.get(dialogue_id, []))
+                alignment_cat = categorize_alignment(v, dialogue_user_text)
+                slot_alignment_categories[slot_name][alignment_cat] += 1
     
     return {
         "n_dialogues": n_dialogues,
@@ -241,6 +312,7 @@ def parse_d0t(base_dir: Path):
         "slot_dontcare_count": slot_dontcare_count,
         "slot_total_seen": slot_total_seen,
         "slot_value_examples": slot_value_examples,
+        "slot_alignment_categories": dict(slot_alignment_categories),
     }
 
 
@@ -267,6 +339,9 @@ def parse_luas(luas_json_path: Path):
     slot_dontcare_count = Counter()
     slot_total_seen = Counter()
     slot_value_examples = defaultdict(lambda: defaultdict(int))
+    
+    # Layered value alignment tracking
+    slot_alignment_categories = defaultdict(Counter)  # slot -> {category -> count}
     
     none_like = {"", "?", "none", "not mentioned", "not given"}
     dontcare_like = {"dontcare", "dont care", "don't care"}
@@ -330,6 +405,15 @@ def parse_luas(luas_json_path: Path):
                                 slot_observed_count[slot_name] += 1
                             else:
                                 slot_observed_count[slot_name] += 1
+                            
+                            # Layered alignment categorization
+                            dialogue_user_text = " ".join(
+                                turn.get("utterance", "").lower()
+                                for turn in turns
+                                if str(turn.get("speaker", "")).lower() == "user"
+                            )
+                            alignment_cat = categorize_alignment(v, dialogue_user_text)
+                            slot_alignment_categories[slot_name][alignment_cat] += 1
     
     # LUAS doesn't have explicit splits, assume train
     dialogues_by_split = {"train": n_dialogues, "val": 0, "test": 0}
@@ -349,6 +433,7 @@ def parse_luas(luas_json_path: Path):
         "slot_dontcare_count": slot_dontcare_count,
         "slot_total_seen": slot_total_seen,
         "slot_value_examples": slot_value_examples,
+        "slot_alignment_categories": dict(slot_alignment_categories),
     }
 
 
@@ -374,6 +459,33 @@ def compute_eda(raw_data: dict) -> dict:
     total_dontcare = sum(raw_data["slot_dontcare_count"].values())
     total_filled = sum(raw_data["slot_observed_count"].values())
     
+    # Layered value alignment metrics (aggregate)
+    slot_alignment_categories = raw_data.get("slot_alignment_categories", {})
+    
+    total_none = 0
+    total_exact = 0
+    total_normalized = 0
+    total_not_aligned = 0
+    
+    for slot, categories in slot_alignment_categories.items():
+        total_none += categories.get("none", 0)
+        total_exact += categories.get("exact", 0)
+        total_normalized += categories.get("normalized", 0)
+        total_not_aligned += categories.get("not_aligned", 0)
+    
+    non_none_total = total_exact + total_normalized + total_not_aligned
+    
+    value_alignment_overall = {
+        "none": total_none,
+        "non_none_total": non_none_total,
+        "exact": total_exact,
+        "exact_pct": (total_exact / non_none_total * 100) if non_none_total > 0 else 0,
+        "normalized": total_normalized,
+        "normalized_pct": (total_normalized / non_none_total * 100) if non_none_total > 0 else 0,
+        "not_aligned": total_not_aligned,
+        "not_aligned_pct": (total_not_aligned / non_none_total * 100) if non_none_total > 0 else 0,
+    }
+    
     return {
         **raw_data,
         "turns_per_dialogue_stats": {
@@ -392,6 +504,9 @@ def compute_eda(raw_data: dict) -> dict:
             "dontcare_pct": (total_dontcare / total_slot_states * 100) if total_slot_states else 0,
             "filled": total_filled,
             "filled_pct": (total_filled / total_slot_states * 100) if total_slot_states else 0,
+        },
+        "value_alignment": {
+            "overall": value_alignment_overall,
         },
     }
 
@@ -454,19 +569,35 @@ def export_csv(eda: dict, csv_prefix: str, dataset_name: str):
     base = Path(csv_prefix)
     base.parent.mkdir(parents=True, exist_ok=True)
     
-    # Slot stats
+    # Slot stats with layered value alignment
     slot_stats_path = base.parent / f"{base.name}_{dataset_name}_slot_stats.csv"
     with slot_stats_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["slot_name", "observed", "none_like", "dontcare", "total_seen"])
+        writer.writerow(["slot_name", "observed", "none_like", "dontcare", "total_seen", "exact_%", "normalized_%", "not_aligned_%"])
         
         all_slots = set(eda["slot_total_seen"].keys())
+        alignment_categories = eda.get("slot_alignment_categories", {})
+        
         for slot in sorted(all_slots):
             observed = eda["slot_observed_count"].get(slot, 0)
             none_like = eda["slot_none_like_count"].get(slot, 0)
             dontcare = eda["slot_dontcare_count"].get(slot, 0)
             total = eda["slot_total_seen"].get(slot, 0)
-            writer.writerow([slot, observed, none_like, dontcare, total])
+            
+            cats = alignment_categories.get(slot, {})
+            exact = cats.get("exact", 0)
+            normalized = cats.get("normalized", 0)
+            not_aligned = cats.get("not_aligned", 0)
+            non_none = exact + normalized + not_aligned
+            
+            if non_none > 0:
+                exact_pct = exact / non_none * 100
+                normalized_pct = normalized / non_none * 100
+                not_aligned_pct = not_aligned / non_none * 100
+            else:
+                exact_pct = normalized_pct = not_aligned_pct = 0
+            
+            writer.writerow([slot, observed, none_like, dontcare, total, f"{exact_pct:.2f}", f"{normalized_pct:.2f}", f"{not_aligned_pct:.2f}"])
     
     print(f"Exported: {slot_stats_path}")
     
@@ -516,13 +647,20 @@ def export_csv(eda: dict, csv_prefix: str, dataset_name: str):
         writer.writerow(["slot_states_dontcare_pct", f"{ld['dontcare_pct']:.2f}"])
         writer.writerow(["slot_states_filled", ld["filled"]])
         writer.writerow(["slot_states_filled_pct", f"{ld['filled_pct']:.2f}"])
+        
+        va = eda.get("value_alignment", {})
+        overall = va.get("overall", {})
+        writer.writerow(["value_alignment_none", overall.get("none", 0)])
+        writer.writerow(["value_alignment_non_none_total", overall.get("non_none_total", 0)])
+        writer.writerow(["value_alignment_exact", overall.get("exact", 0)])
+        writer.writerow(["value_alignment_exact_pct", f"{overall.get('exact_pct', 0):.2f}"])
+        writer.writerow(["value_alignment_normalized", overall.get("normalized", 0)])
+        writer.writerow(["value_alignment_normalized_pct", f"{overall.get('normalized_pct', 0):.2f}"])
+        writer.writerow(["value_alignment_not_aligned", overall.get("not_aligned", 0)])
+        writer.writerow(["value_alignment_not_aligned_pct", f"{overall.get('not_aligned_pct', 0):.2f}"])
     
     print(f"Exported: {summary_path}")
 
-
-# ============================================================================
-# MAIN
-# ============================================================================
 
 def main():
     ap = argparse.ArgumentParser(description="EDA for raw DST data (MultiWOZ, D0T, LUAS)")

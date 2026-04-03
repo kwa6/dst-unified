@@ -4,6 +4,20 @@ Exploratory Data Analysis for unified DST data (JSONL format).
 Analyzes UnifiedDSTExample JSONL files from data_unified/ directory.
 Outputs statistics on splits, slot coverage, target value distribution, and dialogue context.
 
+DEFINITION: Value Alignment
+===========================
+Measured PER TRAINING EXAMPLE using the exact dialogue_context field.
+
+For each example: dialogue_context + slot_name + target_value
+    -> Does target_value appear in dialogue_context?
+
+Layered metrics:
+  1. EXACT ALIGNMENT: target_value appears verbatim (case-insensitive substring)
+  2. NORMALIZED ALIGNMENT: target_value appears after normalization
+     (lowercase, strip punctuation, normalize whitespace)
+  3. SEMANTIC/NONE: Null values (none/empty/not mentioned/dontcare)
+     tracked separately - "is none in context?" not meaningful
+
 Usage:
     python eda_unified.py --split train [--csv-prefix OUTPUT_PREFIX] [--limit ROWS]
 
@@ -15,9 +29,11 @@ Example:
 import argparse
 import csv
 import json
+import re
+import string
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 
 
 def load_jsonl(path: Path, limit: int = None) -> List[Dict[str, Any]]:
@@ -32,6 +48,77 @@ def load_jsonl(path: Path, limit: int = None) -> List[Dict[str, Any]]:
             if limit and len(examples) >= limit:
                 break
     return examples
+
+
+# ============================================================================
+# VALUE ALIGNMENT HELPERS
+# ============================================================================
+
+NONE_LIKE = {"none", "empty", "not mentioned", "not given", "dontcare", "?", ""}
+
+def normalize_value(value: str) -> str:
+    """
+    Normalize value for matching:
+    - lowercase
+    - strip whitespace
+    - strip punctuation
+    - normalize internal whitespace
+    """
+    if not value:
+        return ""
+    v = value.strip().lower()
+    # Remove punctuation
+    v = v.translate(str.maketrans('', '', string.punctuation))
+    # Normalize internal whitespace
+    v = " ".join(v.split())
+    return v
+
+
+def check_exact_alignment(value: str, context: str) -> bool:
+    """
+    Check if value appears verbatim in context (case-insensitive).
+    Uses substring matching on normalized strings.
+    """
+    if not value or not context:
+        return False
+    return value.lower() in context.lower()
+
+
+def check_normalized_alignment(value: str, context: str) -> bool:
+    """
+    Check if value appears after normalization.
+    If exact already matched, this is automatically true.
+    """
+    if not value or not context:
+        return False
+    v_norm = normalize_value(value)
+    ctx_norm = normalize_value(context)
+    if not v_norm:
+        return False
+    # Check substring match on normalized text
+    return v_norm in ctx_norm
+
+
+def categorize_alignment(value: str, context: str) -> str:
+    """
+    Categorize alignment into one of:
+    - "none": null-like value
+    - "exact": exact match in context
+    - "normalized": normalized match (but not exact)
+    - "not_aligned": value not found
+    """
+    v_lower = value.lower().strip()
+    
+    if v_lower in NONE_LIKE:
+        return "none"
+    
+    if check_exact_alignment(value, context):
+        return "exact"
+    
+    if check_normalized_alignment(value, context):
+        return "normalized"
+    
+    return "not_aligned"
 
 
 def compute_eda(examples: List[Dict[str, Any]], dataset_name: str = None):
@@ -52,7 +139,6 @@ def compute_eda(examples: List[Dict[str, Any]], dataset_name: str = None):
     # Target value distribution
     target_value_counter = Counter()
     target_is_none = 0
-    target_is_dontcare = 0
     target_is_filled = 0
     
     # Dialogue context stats
@@ -69,21 +155,25 @@ def compute_eda(examples: List[Dict[str, Any]], dataset_name: str = None):
     # Per-dialogue stats
     dialogues_seen = set()
     
-    # Target value alignment stats (case-insensitive substring matching)
-    # Track which examples have target appearing in context (non-none only)
-    alignment_turn = defaultdict(lambda: {"aligned": 0, "total": 0})  # turn_id
-    alignment_dialogue = defaultdict(lambda: {"aligned": False})  # dialogue_id
-    alignment_dataset = defaultdict(lambda: {
-        "turn_aligned": 0, "turn_total": 0,
-        "dialogues_aligned": set(), "dialogues_total": set()
-    })
+    # ========================================================================
+    # VALUE ALIGNMENT STATS (Per-example, layered definition)
+    # ========================================================================
+    # Track alignment category for each example
+    # Categories: "none", "exact", "normalized", "not_aligned"
+    alignment_categories = Counter()  # Overall counts
+    alignment_by_dataset = defaultdict(Counter)  # dataset -> category -> count
+    alignment_by_slot = defaultdict(Counter)  # slot -> category -> count
+    
+    # For percentage calculations
+    alignment_non_none_total = 0  # Total non-none examples
+    alignment_exact_total = 0     # Exact matches
+    alignment_normalized_total = 0  # Normalized matches (includes exact)
     
     for ex in examples:
         slot = ex["slot_name"]
         target = ex["target_value"]
         dialogue_id = ex["dialogue_id"]
         dataset = ex.get("dataset", "unknown")
-        turn_id = ex.get("turn_id", 0)
         ctx = ex.get("dialogue_context", "")
         
         slot_counter[slot] += 1
@@ -92,10 +182,8 @@ def compute_eda(examples: List[Dict[str, Any]], dataset_name: str = None):
         slot_splits[slot].add(ex.get("split", "unknown"))
         
         target_value_counter[target] += 1
-        if target == "none":
+        if target.lower().strip() in NONE_LIKE:
             target_is_none += 1
-        elif target == "dontcare":
-            target_is_dontcare += 1
         else:
             target_is_filled += 1
         
@@ -112,31 +200,21 @@ def compute_eda(examples: List[Dict[str, Any]], dataset_name: str = None):
         
         dialogues_seen.add(dialogue_id)
         
-        # Target value alignment (only for non-"none" values)
-        if target != "none":
-            # Turn-level tracking
-            turn_key = (dialogue_id, turn_id)
-            alignment_turn[turn_key]["total"] += 1
-            
-            # Check if target appears in dialogue context (case-insensitive substring)
-            target_lower = target.lower()
-            ctx_lower = ctx.lower()
-            is_aligned = target_lower in ctx_lower
-            
-            if is_aligned:
-                alignment_turn[turn_key]["aligned"] += 1
-            
-            # Dialogue-level tracking
-            if is_aligned:
-                alignment_dialogue[dialogue_id]["aligned"] = True
-            
-            # Dataset-level tracking
-            alignment_dataset[dataset]["turn_total"] += 1
-            if is_aligned:
-                alignment_dataset[dataset]["turn_aligned"] += 1
-            alignment_dataset[dataset]["dialogues_total"].add(dialogue_id)
-            if is_aligned:
-                alignment_dataset[dataset]["dialogues_aligned"].add(dialogue_id)
+        # ====================================================================
+        # LAYERED VALUE ALIGNMENT
+        # ====================================================================
+        alignment_cat = categorize_alignment(target, ctx)
+        alignment_categories[alignment_cat] += 1
+        alignment_by_dataset[dataset][alignment_cat] += 1
+        alignment_by_slot[slot][alignment_cat] += 1
+        
+        # Count for percentage calculations
+        if alignment_cat != "none":
+            alignment_non_none_total += 1
+            if alignment_cat == "exact":
+                alignment_exact_total += 1
+            if alignment_cat in {"exact", "normalized"}:
+                alignment_normalized_total += 1
     
     # Compute quantiles for context length
     sorted_ctx_len = sorted(context_length_dist)
@@ -155,35 +233,34 @@ def compute_eda(examples: List[Dict[str, Any]], dataset_name: str = None):
     for slot, value_dist in slot_target_dist.items():
         top_values[slot] = value_dist.most_common(10)
     
-    # Compute alignment percentages at turn level
-    turn_aligned_count = 0
-    turn_total_count = 0
-    for turn_stats in alignment_turn.values():
-        turn_aligned_count += turn_stats["aligned"]
-        turn_total_count += turn_stats["total"]
-    
-    turn_alignment_pct = (turn_aligned_count / turn_total_count * 100) if turn_total_count > 0 else 0
-    
-    # Compute alignment percentages at dialogue level
-    dialogue_aligned_count = sum(1 for d in alignment_dialogue.values() if d["aligned"])
-    dialogue_total_count = len(alignment_dialogue)
-    dialogue_alignment_pct = (dialogue_aligned_count / dialogue_total_count * 100) if dialogue_total_count > 0 else 0
-    
-    # Compute dataset-level alignment
+    # Compute dataset-level alignment percentages
     dataset_alignment = {}
-    for ds, stats in alignment_dataset.items():
-        turn_pct = (stats["turn_aligned"] / stats["turn_total"] * 100) if stats["turn_total"] > 0 else 0
-        dialogue_total = len(stats["dialogues_total"])
-        dialogue_aligned = len(stats["dialogues_aligned"])
-        dialogue_pct = (dialogue_aligned / dialogue_total * 100) if dialogue_total > 0 else 0
+    for ds, cat_counts in alignment_by_dataset.items():
+        exact = cat_counts.get("exact", 0)
+        normalized = cat_counts.get("normalized", 0)
+        not_aligned = cat_counts.get("not_aligned", 0)
+        none_ct = cat_counts.get("none", 0)
+        # non_none includes all non-none categories
+        non_none_ct = exact + normalized + not_aligned
+        
+        exact_pct = (exact / non_none_ct * 100) if non_none_ct > 0 else 0
+        normalized_pct = (normalized / non_none_ct * 100) if non_none_ct > 0 else 0
+        
         dataset_alignment[ds] = {
-            "turn_aligned": stats["turn_aligned"],
-            "turn_total": stats["turn_total"],
-            "turn_alignment_pct": turn_pct,
-            "dialogue_aligned": dialogue_aligned,
-            "dialogue_total": dialogue_total,
-            "dialogue_alignment_pct": dialogue_pct,
+            "exact": exact,
+            "exact_pct": exact_pct,
+            "normalized": normalized,
+            "normalized_pct": normalized_pct,
+            "not_aligned": not_aligned,
+            "not_aligned_pct": (not_aligned / non_none_ct * 100) if non_none_ct > 0 else 0,
+            "none": none_ct,
+            "non_none_total": non_none_ct,
         }
+    
+    # Overall alignment percentages (non-none only)
+    exact_pct_overall = (alignment_exact_total / alignment_non_none_total * 100) if alignment_non_none_total > 0 else 0
+    normalized_pct_overall = (alignment_normalized_total / alignment_non_none_total * 100) if alignment_non_none_total > 0 else 0
+    not_aligned_pct_overall = ((alignment_non_none_total - alignment_normalized_total) / alignment_non_none_total * 100) if alignment_non_none_total > 0 else 0
     
     return {
         "n_examples": n_examples,
@@ -198,10 +275,6 @@ def compute_eda(examples: List[Dict[str, Any]], dataset_name: str = None):
         "target_value_distribution": {
             "none": target_is_none,
             "none_pct": (target_is_none / n_examples * 100) if n_examples else 0,
-            "dontcare": target_is_dontcare,
-            "dontcare_pct": (target_is_dontcare / n_examples * 100)
-            if n_examples
-            else 0,
             "filled": target_is_filled,
             "filled_pct": (target_is_filled / n_examples * 100) if n_examples else 0,
         },
@@ -220,24 +293,29 @@ def compute_eda(examples: List[Dict[str, Any]], dataset_name: str = None):
         "slot_target_examples": top_values,
         "slot_datasets": {k: list(v) for k, v in slot_datasets.items()},
         "slot_splits": {k: list(v) for k, v in slot_splits.items()},
-        "target_value_alignment": {
-            "turn_alignment": {
-                "aligned": turn_aligned_count,
-                "total": turn_total_count,
-                "pct": turn_alignment_pct,
-            },
-            "dialogue_alignment": {
-                "aligned": dialogue_aligned_count,
-                "total": dialogue_total_count,
-                "pct": dialogue_alignment_pct,
+        # Layered value alignment metrics
+        "value_alignment": {
+            "overall": {
+                "exact": alignment_exact_total,
+                "exact_pct": exact_pct_overall,
+                "normalized": alignment_normalized_total,
+                "normalized_pct": normalized_pct_overall,
+                "not_aligned": alignment_non_none_total - alignment_normalized_total,
+                "not_aligned_pct": not_aligned_pct_overall,
+                "none": alignment_categories.get("none", 0),
+                "non_none_total": alignment_non_none_total,
             },
             "by_dataset": dataset_alignment,
+            "by_slot": {
+                slot: dict(counts)
+                for slot, counts in alignment_by_slot.items()
+            }
         },
     }
 
 
 def print_eda(eda: Dict[str, Any], split_name: str = "unknown"):
-    """Pretty-print EDA results."""
+    """Pretty-print EDA results with layered value alignment metrics."""
     print("=" * 80)
     print(f"UNIFIED DST EDA ({split_name})")
     print("=" * 80)
@@ -269,7 +347,6 @@ def print_eda(eda: Dict[str, Any], split_name: str = "unknown"):
     tv = eda["target_value_distribution"]
     print(f"\nTarget value distribution:")
     print(f"  none:       {tv['none']:7d} ({tv['none_pct']:5.2f}%)")
-    print(f"  dontcare:   {tv['dontcare']:7d} ({tv['dontcare_pct']:5.2f}%)")
     print(f"  filled:     {tv['filled']:7d} ({tv['filled_pct']:5.2f}%)")
     
     if eda["target_value_examples"]:
@@ -293,28 +370,46 @@ def print_eda(eda: Dict[str, Any], split_name: str = "unknown"):
         for turns, cnt in sorted(eda["context_turn_count"].items()):
             print(f"  {turns} turns: {cnt}")
     
-    # Target value alignment
-    if eda.get("target_value_alignment"):
+    # ========================================================================
+    # LAYERED VALUE ALIGNMENT METRICS
+    # ========================================================================
+    if eda.get("value_alignment"):
         print("\n" + "=" * 80)
-        print("TARGET VALUE ALIGNMENT (non-'none' targets only)")
+        print("VALUE ALIGNMENT (Per-Example, Layered Definition)")
         print("=" * 80)
+        print("\nDEFINITION:")
+        print("  Measured PER TRAINING EXAMPLE using dialogue_context the model receives.")
+        print("  For each example: Is target_value recoverable from dialogue_context?")
+        print()
+        print("  1. EXACT:      Value appears verbatim (case-insensitive substring)")
+        print("  2. NORMALIZED: Value appears after normalization (punct, spaces, case)")
+        print("  3. NONE:       Null values (none/empty/not given/dontcare)")
+        print("  4. NOT_ALIGNED: Value not found in context")
+        print()
         
-        ta = eda["target_value_alignment"]
-        turn_align = ta["turn_alignment"]
-        dial_align = ta["dialogue_alignment"]
+        va = eda["value_alignment"]
+        overall = va["overall"]
         
-        print(f"\nTurn-level alignment (substring match in context):")
-        print(f"  {turn_align['aligned']:7d} / {turn_align['total']:7d} examples ({turn_align['pct']:5.2f}%)")
+        print(f"OVERALL ALIGNMENT (across all examples):")
+        print(f"  None-like values:     {overall['none']:10d} examples (excluded from alignment calc)")
+        print(f"  Non-none examples:    {overall['non_none_total']:10d} examples")
+        print()
+        print(f"  EXACT alignment:      {overall['exact']:10d} ({overall['exact_pct']:5.2f}%)")
+        print(f"  NORMALIZED alignment: {overall['normalized']:10d} ({overall['normalized_pct']:5.2f}%)")
+        print(f"    (includes exact matches)")
+        print(f"  NOT_ALIGNED:          {overall['non_none_total'] - overall['normalized']:10d} ({overall['not_aligned_pct']:5.2f}%)")
+        print()
         
-        print(f"\nDialogue-level alignment (≥1 target value in context):")
-        print(f"  {dial_align['aligned']:7d} / {dial_align['total']:7d} dialogues ({dial_align['pct']:5.2f}%)")
-        
-        print(f"\nAlignment by dataset:")
-        for ds in sorted(ta["by_dataset"].keys()):
-            stats = ta["by_dataset"][ds]
-            print(f"\n  {ds}:")
-            print(f"    Turn-level:     {stats['turn_aligned']:7d} / {stats['turn_total']:7d} ({stats['turn_alignment_pct']:5.2f}%)")
-            print(f"    Dialogue-level: {stats['dialogue_aligned']:7d} / {stats['dialogue_total']:7d} ({stats['dialogue_alignment_pct']:5.2f}%)")
+        if va["by_dataset"]:
+            print(f"ALIGNMENT BY DATASET:")
+            for ds in sorted(va["by_dataset"].keys()):
+                stats = va["by_dataset"][ds]
+                print(f"\n  {ds}:")
+                print(f"    None-like:     {stats['none']:6d}")
+                print(f"    Non-none:      {stats['non_none_total']:6d}")
+                print(f"    Exact:         {stats['exact']:6d} ({stats['exact_pct']:5.2f}%)")
+                print(f"    Normalized:    {stats['normalized']:6d} ({stats['normalized_pct']:5.2f}%)")
+                print(f"    Not-aligned:   {stats['not_aligned']:6d} ({stats['not_aligned_pct']:5.2f}%)")
 
 
 def export_csv(eda: Dict[str, Any], csv_prefix: str, split_name: str):
@@ -363,8 +458,6 @@ def export_csv(eda: Dict[str, Any], csv_prefix: str, split_name: str):
         tv = eda["target_value_distribution"]
         writer.writerow(["target_none", tv["none"]])
         writer.writerow(["target_none_pct", f"{tv['none_pct']:.2f}"])
-        writer.writerow(["target_dontcare", tv["dontcare"]])
-        writer.writerow(["target_dontcare_pct", f"{tv['dontcare_pct']:.2f}"])
         writer.writerow(["target_filled", tv["filled"]])
         writer.writerow(["target_filled_pct", f"{tv['filled_pct']:.2f}"])
         
@@ -376,28 +469,40 @@ def export_csv(eda: Dict[str, Any], csv_prefix: str, split_name: str):
         writer.writerow(["context_length_max", ctx["max"]])
         writer.writerow(["context_length_mean", f"{ctx['mean']:.0f}"])
         
-        # Target value alignment
-        if eda.get("target_value_alignment"):
-            ta = eda["target_value_alignment"]
+        # Layered value alignment
+        if eda.get("value_alignment"):
+            va = eda["value_alignment"]
             writer.writerow(["", ""])
-            writer.writerow(["TARGET_VALUE_ALIGNMENT_(non-none_only)", ""])
-            writer.writerow(["turn_alignment_count", ta["turn_alignment"]["aligned"]])
-            writer.writerow(["turn_alignment_total", ta["turn_alignment"]["total"]])
-            writer.writerow(["turn_alignment_pct", f"{ta['turn_alignment']['pct']:.2f}"])
-            writer.writerow(["dialogue_alignment_count", ta["dialogue_alignment"]["aligned"]])
-            writer.writerow(["dialogue_alignment_total", ta["dialogue_alignment"]["total"]])
-            writer.writerow(["dialogue_alignment_pct", f"{ta['dialogue_alignment']['pct']:.2f}"])
+            writer.writerow(["VALUE_ALIGNMENT_LAYERED", ""])
+            writer.writerow(["", "Per-example, using dialogue_context model receives"])
             
-            for ds in sorted(ta["by_dataset"].keys()):
-                stats = ta["by_dataset"][ds]
+            overall = va["overall"]
+            writer.writerow(["", ""])
+            writer.writerow(["OVERALL", ""])
+            writer.writerow(["none_examples", overall["none"]])
+            writer.writerow(["non_none_examples", overall["non_none_total"]])
+            writer.writerow(["exact_count", overall["exact"]])
+            writer.writerow(["exact_pct", f"{overall['exact_pct']:.2f}"])
+            writer.writerow(["normalized_count", overall["normalized"]])
+            writer.writerow(["normalized_pct", f"{overall['normalized_pct']:.2f}"])
+            writer.writerow(["not_aligned_count", overall["not_aligned_count"] if "not_aligned_count" in overall else overall["non_none_total"] - overall["normalized"]])
+            writer.writerow(["not_aligned_pct", f"{overall['not_aligned_pct']:.2f}"])
+            
+            if va["by_dataset"]:
                 writer.writerow(["", ""])
-                writer.writerow([f"dataset_{ds}", ""])
-                writer.writerow([f"  turn_aligned", stats["turn_aligned"]])
-                writer.writerow([f"  turn_total", stats["turn_total"]])
-                writer.writerow([f"  turn_pct", f"{stats['turn_alignment_pct']:.2f}"])
-                writer.writerow([f"  dialogue_aligned", stats["dialogue_aligned"]])
-                writer.writerow([f"  dialogue_total", stats["dialogue_total"]])
-                writer.writerow([f"  dialogue_pct", f"{stats['dialogue_alignment_pct']:.2f}"])
+                writer.writerow(["BY_DATASET", ""])
+                for ds in sorted(va["by_dataset"].keys()):
+                    stats = va["by_dataset"][ds]
+                    writer.writerow(["", ""])
+                    writer.writerow([f"dataset_{ds}", ""])
+                    writer.writerow([f"  none", stats["none"]])
+                    writer.writerow([f"  non_none_total", stats["non_none_total"]])
+                    writer.writerow([f"  exact", stats["exact"]])
+                    writer.writerow([f"  exact_pct", f"{stats['exact_pct']:.2f}"])
+                    writer.writerow([f"  normalized", stats["normalized"]])
+                    writer.writerow([f"  normalized_pct", f"{stats['normalized_pct']:.2f}"])
+                    writer.writerow([f"  not_aligned", stats["not_aligned"]])
+                    writer.writerow([f"  not_aligned_pct", f"{stats['not_aligned_pct']:.2f}"])
     
     print(f"Exported: {summary_path}")
 

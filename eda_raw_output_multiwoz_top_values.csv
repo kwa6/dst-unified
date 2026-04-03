@@ -1,0 +1,250 @@
+slot_name,value,count
+attraction-area,,49991
+attraction-area,not mentioned,7454
+attraction-area,centre,7407
+attraction-area,west,1892
+attraction-area,east,1481
+attraction-area,south,1335
+attraction-area,dontcare,975
+attraction-area,north,817
+attraction-area,none,171
+attraction-area,centre>west,2
+attraction-name,,49900
+attraction-name,not mentioned,10620
+attraction-name,christ college,510
+attraction-name,all saints church,481
+attraction-name,cambridge artworks,304
+attraction-name,broughton house gallery,289
+attraction-name,none,286
+attraction-name,byard art,236
+attraction-name,old schools,226
+attraction-name,cambridge university botanic gardens,220
+attraction-type,,49996
+attraction-type,not mentioned,6938
+attraction-type,museum,3738
+attraction-type,college,2849
+attraction-type,entertainment,906
+attraction-type,architecture,899
+attraction-type,park,894
+attraction-type,theatre,893
+attraction-type,swimming pool,874
+attraction-type,boat,775
+bus-arriveBy,,37705
+bus-arriveBy,not mentioned,82
+bus-day,,37705
+bus-day,not mentioned,77
+bus-day,wednesday,5
+bus-departure,,37704
+bus-departure,not mentioned,52
+bus-departure,cambridge,31
+bus-destination,,37705
+bus-destination,not mentioned,49
+bus-destination,london kings cross,14
+bus-destination,cambridge,10
+bus-destination,bishops stortford,5
+bus-destination,kohinoor,4
+bus-leaveAt,,37705
+bus-leaveAt,not mentioned,77
+bus-leaveAt,21:45,5
+hospital-department,,70342
+hospital-department,not mentioned,775
+hospital-department,emergency department,67
+hospital-department,none,25
+hospital-department,acute medical assessment unit,21
+hospital-department,neurology,16
+hospital-department,cambridge eye unit,14
+hospital-department,infectious diseases,13
+hospital-department,dontcare,12
+hospital-department,paediatric clinic,11
+hotel-area,,43542
+hotel-area,not mentioned,12616
+hotel-area,north,4324
+hotel-area,centre,2755
+hotel-area,east,2428
+hotel-area,dontcare,2334
+hotel-area,west,1638
+hotel-area,south,1615
+hotel-area,none,268
+hotel-area,west|centre,6
+hotel-internet,,43569
+hotel-internet,not mentioned,16687
+hotel-internet,yes,10091
+hotel-internet,dontcare,611
+hotel-internet,no,360
+hotel-internet,none,209
+hotel-name,,43387
+hotel-name,not mentioned,13493
+hotel-name,acorn guest house,1555
+hotel-name,alexander bed and breakfast,939
+hotel-name,university arms hotel,602
+hotel-name,ashley hotel,599
+hotel-name,allenbell,594
+hotel-name,express by holiday inn cambridge,562
+hotel-name,gonville hotel,551
+hotel-name,cambridge belfry,549
+hotel-parking,,43554
+hotel-parking,not mentioned,16446
+hotel-parking,yes,9828
+hotel-parking,dontcare,844
+hotel-parking,no,612
+hotel-parking,none,242
+hotel-parking,free,1
+hotel-pricerange,,43564
+hotel-pricerange,not mentioned,13812
+hotel-pricerange,moderate,5997
+hotel-pricerange,cheap,3957
+hotel-pricerange,expensive,2564
+hotel-pricerange,dontcare,1403
+hotel-pricerange,none,217
+hotel-pricerange,cheap|moderate,7
+hotel-pricerange,cheap>moderate,4
+hotel-pricerange,moderate|cheap,1
+hotel-stars,,43572
+hotel-stars,not mentioned,15549
+hotel-stars,4,7419
+hotel-stars,3,2198
+hotel-stars,0,1064
+hotel-stars,2,941
+hotel-stars,dontcare,473
+hotel-stars,none,159
+hotel-stars,5,68
+hotel-stars,1,59
+hotel-type,,43550
+hotel-type,not mentioned,13577
+hotel-type,guesthouse,6698
+hotel-type,hotel,5366
+hotel-type,guest house,1664
+hotel-type,dontcare,430
+hotel-type,none,239
+hotel-type,bed and breakfast,2
+hotel-type,hotel|guesthouse,1
+restaurant-area,,42246
+restaurant-area,centre,10315
+restaurant-area,not mentioned,9543
+restaurant-area,west,2315
+restaurant-area,south,2036
+restaurant-area,north,1950
+restaurant-area,east,1768
+restaurant-area,dontcare,1152
+restaurant-area,none,192
+restaurant-area,east|south,6
+restaurant-food,,42183
+restaurant-food,not mentioned,8215
+restaurant-food,indian,3309
+restaurant-food,chinese,2880
+restaurant-food,italian,2565
+restaurant-food,british,1840
+restaurant-food,dontcare,1183
+restaurant-food,european,1082
+restaurant-food,modern european,727
+restaurant-food,asian oriental,718
+restaurant-name,,42076
+restaurant-name,not mentioned,14774
+restaurant-name,curry garden,309
+restaurant-name,curry prince,301
+restaurant-name,bedouin,284
+restaurant-name,none,251
+restaurant-name,golden wok,251
+restaurant-name,nandos,226
+restaurant-name,charlie chan,225
+restaurant-name,pizza hut fenditton,222
+restaurant-pricerange,,42237
+restaurant-pricerange,not mentioned,9960
+restaurant-pricerange,expensive,8345
+restaurant-pricerange,moderate,5684
+restaurant-pricerange,cheap,4196
+restaurant-pricerange,dontcare,956
+restaurant-pricerange,none,132
+restaurant-pricerange,cheap|moderate,13
+restaurant-pricerange,expensive|moderate,3
+restaurant-pricerange,moderate|cheap,1
+taxi-arriveBy,,65263
+taxi-arriveBy,not mentioned,3910
+taxi-arriveBy,20:00,70
+taxi-arriveBy,17:30,67
+taxi-arriveBy,17:45,66
+taxi-arriveBy,14:00,66
+taxi-arriveBy,14:45,63
+taxi-arriveBy,18:30,62
+taxi-arriveBy,12:45,59
+taxi-arriveBy,none,55
+taxi-departure,,65137
+taxi-departure,not mentioned,1047
+taxi-departure,acorn guest house,179
+taxi-departure,alexander bed and breakfast,146
+taxi-departure,none,91
+taxi-departure,gonville hotel,85
+taxi-departure,christ college,84
+taxi-departure,cityroomz,84
+taxi-departure,all saints church,83
+taxi-departure,ashley hotel,82
+taxi-destination,,65205
+taxi-destination,not mentioned,948
+taxi-destination,none,123
+taxi-destination,acorn guest house,89
+taxi-destination,curry garden,75
+taxi-destination,huntingdon marriott hotel,68
+taxi-destination,alexander bed and breakfast,63
+taxi-destination,christ college,57
+taxi-destination,curry prince,55
+taxi-destination,university arms hotel,51
+taxi-leaveAt,,65260
+taxi-leaveAt,not mentioned,3325
+taxi-leaveAt,none,54
+taxi-leaveAt,11:00,53
+taxi-leaveAt,05:30,51
+taxi-leaveAt,04:00,51
+taxi-leaveAt,05:45,48
+taxi-leaveAt,09:15,48
+taxi-leaveAt,12:30,46
+taxi-leaveAt,11:45,44
+train-arriveBy,,47259
+train-arriveBy,not mentioned,13230
+train-arriveBy,dontcare,295
+train-arriveBy,09:15,265
+train-arriveBy,11:30,254
+train-arriveBy,17:45,253
+train-arriveBy,11:45,251
+train-arriveBy,10:30,245
+train-arriveBy,08:00,235
+train-arriveBy,13:45,230
+train-day,,47229
+train-day,not mentioned,3373
+train-day,sunday,3309
+train-day,tuesday,3067
+train-day,wednesday,2994
+train-day,saturday,2975
+train-day,friday,2899
+train-day,thursday,2857
+train-day,monday,2785
+train-day,none,36
+train-departure,,47217
+train-departure,cambridge,9941
+train-departure,not mentioned,3228
+train-departure,kings lynn,1009
+train-departure,london kings cross,996
+train-departure,leicester,989
+train-departure,peterborough,960
+train-departure,birmingham new street,936
+train-departure,ely,930
+train-departure,bishops stortford,922
+train-destination,,47251
+train-destination,cambridge,10713
+train-destination,not mentioned,2777
+train-destination,london liverpool street,968
+train-destination,stansted airport,951
+train-destination,leicester,940
+train-destination,birmingham new street,915
+train-destination,norwich,897
+train-destination,ely,895
+train-destination,stevenage,888
+train-leaveAt,,47262
+train-leaveAt,not mentioned,13423
+train-leaveAt,dontcare,541
+train-leaveAt,17:00,267
+train-leaveAt,21:15,238
+train-leaveAt,13:00,229
+train-leaveAt,09:15,220
+train-leaveAt,15:45,219
+train-leaveAt,12:15,218
+train-leaveAt,15:15,215

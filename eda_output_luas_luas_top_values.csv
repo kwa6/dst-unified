@@ -1,0 +1,239 @@
+slot_name,value,count
+attraction-area,centre,4428
+attraction-area,west,1080
+attraction-area,east,933
+attraction-area,south,722
+attraction-area,north,579
+attraction-name,broughton house gallery,215
+attraction-name,all saints church,203
+attraction-name,riverboat georgina,203
+attraction-name,milton country park,172
+attraction-name,the fitzwilliam museum,167
+attraction-name,cambridge museum of technology,165
+attraction-name,cambridge university botanic gardens,159
+attraction-name,christ's college,157
+attraction-name,old schools,155
+attraction-name,parkside pools,155
+attraction-type,museum,2371
+attraction-type,college,1831
+attraction-type,nightclub,614
+attraction-type,architecture,602
+attraction-type,park,587
+attraction-type,swimmingpool,551
+attraction-type,theatre,520
+attraction-type,boat,508
+attraction-type,entertainment,283
+attraction-type,cinema,274
+hotel-area,north,3290
+hotel-area,centre,2103
+hotel-area,east,1645
+hotel-area,west,1253
+hotel-area,south,1216
+hotel-bookday,wednesday,836
+hotel-bookday,tuesday,731
+hotel-bookday,saturday,719
+hotel-bookday,thursday,699
+hotel-bookday,friday,697
+hotel-bookday,monday,689
+hotel-bookday,sunday,636
+hotel-bookpeople,6,675
+hotel-bookpeople,1,666
+hotel-bookpeople,4,629
+hotel-bookpeople,7,611
+hotel-bookpeople,8,608
+hotel-bookpeople,3,605
+hotel-bookpeople,2,584
+hotel-bookpeople,5,572
+hotel-bookstay,2,1184
+hotel-bookstay,4,1116
+hotel-bookstay,3,1110
+hotel-bookstay,5,1070
+hotel-bookstay,1,276
+hotel-bookstay,7,18
+hotel-bookstay,6,13
+hotel-bookstay,8,7
+hotel-internet,yes,6811
+hotel-internet,no,311
+hotel-name,acorn guest house,1459
+hotel-name,alexander bed and breakfast,767
+hotel-name,university arms hotel,701
+hotel-name,gonville hotel,588
+hotel-name,allenbell,542
+hotel-name,ashley hotel,526
+hotel-name,cityroomz,501
+hotel-name,huntingdon marriott hotel,441
+hotel-name,hamilton lodge,427
+hotel-name,bridge guest house,385
+hotel-parking,yes,6905
+hotel-parking,no,534
+hotel-pricerange,moderate,4247
+hotel-pricerange,cheap,2566
+hotel-pricerange,expensive,1635
+hotel-stars,4,5267
+hotel-stars,3,1642
+hotel-stars,0,807
+hotel-stars,2,666
+hotel-stars,1,26
+hotel-stars,5,26
+hotel-type,guesthouse,6799
+hotel-type,hotel,4093
+restaurant-area,centre,7166
+restaurant-area,west,1990
+restaurant-area,north,1821
+restaurant-area,south,1796
+restaurant-area,east,1538
+restaurant-bookday,sunday,766
+restaurant-bookday,saturday,756
+restaurant-bookday,friday,696
+restaurant-bookday,wednesday,690
+restaurant-bookday,tuesday,638
+restaurant-bookday,monday,636
+restaurant-bookday,thursday,612
+restaurant-bookpeople,5,627
+restaurant-bookpeople,6,617
+restaurant-bookpeople,8,616
+restaurant-bookpeople,2,608
+restaurant-bookpeople,1,603
+restaurant-bookpeople,3,594
+restaurant-bookpeople,7,592
+restaurant-bookpeople,4,543
+restaurant-booktime,12:00,155
+restaurant-booktime,16:00,151
+restaurant-booktime,17:15,144
+restaurant-booktime,17:00,144
+restaurant-booktime,17:30,143
+restaurant-booktime,12:15,142
+restaurant-booktime,12:30,141
+restaurant-booktime,19:30,137
+restaurant-booktime,20:00,134
+restaurant-booktime,18:15,133
+restaurant-food,indian,2652
+restaurant-food,chinese,2345
+restaurant-food,italian,2330
+restaurant-food,british,1415
+restaurant-food,european,945
+restaurant-food,asian oriental,776
+restaurant-food,modern european,609
+restaurant-food,turkish,474
+restaurant-food,gastropub,455
+restaurant-food,mediterranean,404
+restaurant-name,midsummer house restaurant,406
+restaurant-name,curry garden,278
+restaurant-name,curry prince,267
+restaurant-name,da vinci pizzeria,252
+restaurant-name,bedouin,221
+restaurant-name,golden wok,215
+restaurant-name,dojo noodle bar,204
+restaurant-name,meghna,204
+restaurant-name,yippee noodle bar,203
+restaurant-name,nandos,195
+restaurant-pricerange,expensive,5571
+restaurant-pricerange,moderate,4399
+restaurant-pricerange,cheap,3305
+taxi-arriveby,17:00,79
+taxi-arriveby,20:00,74
+taxi-arriveby,15:00,74
+taxi-arriveby,17:45,68
+taxi-arriveby,19:30,67
+taxi-arriveby,16:00,63
+taxi-arriveby,14:45,62
+taxi-arriveby,18:30,62
+taxi-arriveby,18:15,62
+taxi-arriveby,15:30,61
+taxi-departure,acorn guest house,158
+taxi-departure,alexander bed and breakfast,123
+taxi-departure,cityroomz,78
+taxi-departure,ashley hotel,66
+taxi-departure,aylesbray lodge guest house,63
+taxi-departure,cambridge belfry,56
+taxi-departure,gonville hotel,54
+taxi-departure,university arms hotel,54
+taxi-departure,bridge guest house,53
+taxi-departure,riverboat georgina,53
+taxi-destination,acorn guest house,117
+taxi-destination,alexander bed and breakfast,69
+taxi-destination,university arms hotel,67
+taxi-destination,ashley hotel,65
+taxi-destination,gonville hotel,61
+taxi-destination,finches bed and breakfast,59
+taxi-destination,riverboat georgina,57
+taxi-destination,avalon,55
+taxi-destination,hamilton lodge,55
+taxi-destination,charlie chan,54
+taxi-leaveat,05:45,57
+taxi-leaveat,13:00,50
+taxi-leaveat,06:15,48
+taxi-leaveat,05:00,46
+taxi-leaveat,21:30,46
+taxi-leaveat,17:45,45
+taxi-leaveat,11:00,45
+taxi-leaveat,11:45,44
+taxi-leaveat,19:00,43
+taxi-leaveat,03:45,42
+train-arriveby,09:15,265
+train-arriveby,11:45,232
+train-arriveby,08:30,228
+train-arriveby,09:30,222
+train-arriveby,09:45,222
+train-arriveby,17:45,200
+train-arriveby,17:15,195
+train-arriveby,09:00,192
+train-arriveby,13:45,189
+train-arriveby,13:00,188
+train-bookpeople,1,1287
+train-bookpeople,7,1062
+train-bookpeople,8,1029
+train-bookpeople,5,978
+train-bookpeople,2,889
+train-bookpeople,4,883
+train-bookpeople,3,840
+train-bookpeople,6,754
+train-bookpeople,15,10
+train-bookpeople,10,4
+train-day,sunday,3289
+train-day,friday,3036
+train-day,tuesday,2834
+train-day,saturday,2804
+train-day,thursday,2717
+train-day,wednesday,2713
+train-day,monday,2625
+train-departure,cambridge,9614
+train-departure,kings lynn,1056
+train-departure,norwich,1004
+train-departure,leicester,927
+train-departure,london liverpool street,921
+train-departure,peterborough,910
+train-departure,broxbourne,891
+train-departure,ely,866
+train-departure,london kings cross,860
+train-departure,birmingham new street,837
+train-destination,cambridge,9521
+train-destination,peterborough,1001
+train-destination,leicester,978
+train-destination,london liverpool street,972
+train-destination,stevenage,951
+train-destination,stansted airport,931
+train-destination,kings lynn,906
+train-destination,bishops stortford,848
+train-destination,birmingham new street,840
+train-destination,broxbourne,831
+train-leaveat,15:15,239
+train-leaveat,08:30,233
+train-leaveat,21:15,224
+train-leaveat,15:30,221
+train-leaveat,13:00,205
+train-leaveat,08:15,202
+train-leaveat,12:45,201
+train-leaveat,11:15,200
+train-leaveat,10:45,198
+train-leaveat,12:30,195
+train-trainid,,24
+train-trainid,tr8842,12
+train-trainid,tr0254,12
+train-trainid,tr0552,11
+train-trainid,tr4494,11
+train-trainid,tr5089,11
+train-trainid,tr3912,10
+train-trainid,not provided,10
+train-trainid,tr8813,10
+train-trainid,tr8913,10

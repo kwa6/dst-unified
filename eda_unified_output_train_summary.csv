@@ -1,0 +1,40 @@
+metric,value
+examples,278818
+dialogues,7556
+examples_per_dialogue_avg,36.90
+unique_slots,31
+target_none,24
+target_none_pct,0.01
+target_filled,278794
+target_filled_pct,99.99
+context_length_min,51
+context_length_p25,561
+context_length_median,970
+context_length_p75,1529
+context_length_max,4768
+context_length_mean,1111
+,
+VALUE_ALIGNMENT_LAYERED,
+,"Per-example, using dialogue_context model receives"
+,
+OVERALL,
+none_examples,24
+non_none_examples,278794
+exact_count,240922
+exact_pct,86.42
+normalized_count,244302
+normalized_pct,87.63
+not_aligned_count,34492
+not_aligned_pct,12.37
+,
+BY_DATASET,
+,
+dataset_luas,
+  none,24
+  non_none_total,278794
+  exact,240922
+  exact_pct,86.42
+  normalized,3380
+  normalized_pct,1.21
+  not_aligned,34492
+  not_aligned_pct,12.37

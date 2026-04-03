@@ -199,15 +199,18 @@ def main():
         learning_rate=args.lr,
         warmup_steps=args.warmup_steps,
         max_steps=args.steps,
-        logging_steps=50,
+        logging_steps=20,  # More frequent logging for better real-time feedback
         logging_strategy="steps",
         logging_first_step=True,
         eval_strategy="steps" if eval_ds else "no",
         eval_steps=100 if eval_ds else None,
+        save_strategy="steps",  # Save checkpoints regularly
+        save_steps=100,
+        load_best_model_at_end=True if eval_ds else False,
         report_to=[],
         fp16=fp16,
         max_grad_norm=1.0,
-        save_strategy="no",
+        lr_scheduler_type="cosine",  # Smoother LR decay
         dataloader_num_workers=0,
         optim="adamw_torch",
         seed=args.seed,
@@ -227,9 +230,13 @@ def main():
     print(f"  Steps:          {args.steps}")
     print(f"  Batch size:     {args.batch_size} × {args.grad_accum} accum = "
           f"{args.batch_size * args.grad_accum} effective")
+    print(f"  Warmup steps:   {args.warmup_steps}")
     print(f"  Learning rate:  {args.lr}")
+    print(f"  LR scheduler:   cosine (maintains min LR throughout training)")
     print(f"  LoRA r:         {args.lora_r}  alpha: {args.lora_alpha}")
-    print(f"  Device:         {llama.device}  fp16: {fp16}\n")
+    print(f"  Device:         {llama.device}  fp16: {fp16}")
+    print(f"  Checkpointing:  every 100 steps")
+    print()
 
     trainer.train()
 

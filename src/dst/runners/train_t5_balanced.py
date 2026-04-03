@@ -108,7 +108,10 @@ def main():
 
     print("Loading model/tokenizer...")
     tok = AutoTokenizer.from_pretrained(args.model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(args.model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(
+        args.model_name,
+        tie_word_embeddings=False  # Suppress tied weights warning
+    )
     model = model.to("cuda")
     print(f"Model loaded and moved to CUDA")
 

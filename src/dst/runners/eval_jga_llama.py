@@ -74,16 +74,9 @@ def main():
     correct_non_none = 0
     mismatches_printed = 0
 
-    for key in tqdm(turn_keys, desc="Turns"):
+    for idx, key in enumerate(tqdm(turn_keys, desc="Evaluating", unit="turn")):
         rows = groups[key]
         total_turns += 1
-
-        # Print periodic progress to keep connection alive
-        if total_turns % 10 == 0:
-            current_jga = (correct_turns / total_turns) if total_turns > 0 else 0.0
-            print(f"[{total_turns}/{len(turn_keys)}] JGA={current_jga:.4f}, Slot Acc={correct_slots/total_slots if total_slots > 0 else 0:.4f}", 
-                  file=sys.stderr)
-            sys.stderr.flush()
 
         turn_all_correct = True
         turn_mismatches = []

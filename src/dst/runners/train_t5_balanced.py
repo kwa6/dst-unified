@@ -78,7 +78,8 @@ def main():
     ap.add_argument("--model_name", default="google/flan-t5-base")
     ap.add_argument("--limit_read", type=int, default=None, help="How many JSONL lines to read before balancing")
     ap.add_argument("--total_examples", type=int, default=400, help="Size of balanced training set")
-    ap.add_argument("--steps", type=int, default=500, help="Training steps (increased from 200)")
+    ap.add_argument("--steps", type=int, default=None, help="(Deprecated: use num_epochs)")
+    ap.add_argument("--num_epochs", type=int, default=3, help="Number of training epochs")
     ap.add_argument("--warmup_steps", type=int, default=50, help="Warmup steps for learning rate scheduler")
     ap.add_argument("--eval_path", default=None, help="JSONL file for evaluation during training")
     ap.add_argument("--seed", type=int, default=13)
@@ -131,18 +132,19 @@ def main():
         gradient_accumulation_steps=2,
         learning_rate=2e-4,
         warmup_steps=args.warmup_steps,
-        max_steps=args.steps,
+        num_train_epochs=args.num_epochs,
         logging_steps=20,
         logging_strategy="steps",
         logging_first_step=True,
         eval_strategy="steps" if eval_ds else "no",
-        eval_steps=100 if eval_ds else None,
+        eval_steps=50 if eval_ds else None,
         save_strategy="steps",
         save_steps=100,
         load_best_model_at_end=True if eval_ds else False,
         report_to=[],
         fp16=True,
         max_grad_norm=1.0,
+        lr_scheduler_type="cosine",  # Better than linear decay to 0
         dataloader_num_workers=0,
         dataloader_pin_memory=True,
         optim="adamw_torch",
@@ -159,9 +161,10 @@ def main():
 
     print(f"\nTraining Configuration:")
     print(f"  Batch size: 8 × {train_args.gradient_accumulation_steps} (effective = 16)")
-    print(f"  Max steps: {args.steps}")
+    print(f"  Num epochs: {args.num_epochs}")
     print(f"  Warmup steps: {args.warmup_steps}")
     print(f"  Learning rate: {train_args.learning_rate}")
+    print(f"  LR scheduler: cosine (maintains min LR throughout training)")
     print(f"  Checkpointing: every {train_args.save_steps} steps")
     print()
     print("Training...")

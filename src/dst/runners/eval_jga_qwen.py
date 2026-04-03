@@ -11,6 +11,8 @@ import argparse
 import sys
 from collections import defaultdict
 
+from tqdm import tqdm
+
 from dst.data.jsonl_dataset import iter_jsonl
 from dst.models.prompting import make_prompt_example
 from dst.models.qwen_dst import QwenDSTModel
@@ -58,14 +60,9 @@ def main():
 
     mismatches_printed = 0
 
-    for key in turn_keys:
+    for key in tqdm(turn_keys, desc="Evaluating", unit="turn"):
         rows = groups[key]
         total_turns += 1
-
-        # Print progress every 20 turns to keep connection alive
-        if total_turns % 20 == 0:
-            print(f"Progress: {total_turns}/{len(turn_keys)} turns evaluated...", file=sys.stderr)
-            sys.stderr.flush()
 
         turn_all_correct = True
         turn_mismatches = []

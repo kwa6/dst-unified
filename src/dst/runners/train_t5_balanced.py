@@ -128,9 +128,9 @@ def main():
     
     train_args = TrainingArguments(
         output_dir=str(out_dir),
-        per_device_train_batch_size=8,
-        gradient_accumulation_steps=2,
-        learning_rate=2e-4,
+        per_device_train_batch_size=4,  # Reduced from 8 for stability
+        gradient_accumulation_steps=1,  # Reduced from 2 (effective batch = 4)
+        learning_rate=1e-4,  # Reduced from 2e-4 (FP32 is more stable at lower LR)
         warmup_steps=args.warmup_steps,
         num_train_epochs=args.num_epochs,
         logging_steps=20,
@@ -142,9 +142,9 @@ def main():
         save_steps=100,
         load_best_model_at_end=True if eval_ds else False,
         report_to=[],
-        fp16=True,
+        fp16=False,  # Disabled — FP32 is more stable, even if slower
         max_grad_norm=1.0,
-        lr_scheduler_type="cosine",  # Better than linear decay to 0
+        lr_scheduler_type="cosine",
         dataloader_num_workers=0,
         dataloader_pin_memory=True,
         optim="adamw_torch",
@@ -160,10 +160,11 @@ def main():
     )
 
     print(f"\nTraining Configuration:")
-    print(f"  Batch size: 8 × {train_args.gradient_accumulation_steps} (effective = 16)")
+    print(f"  Batch size: 4 × {train_args.gradient_accumulation_steps} (effective = 4)")
     print(f"  Num epochs: {args.num_epochs}")
     print(f"  Warmup steps: {args.warmup_steps}")
     print(f"  Learning rate: {train_args.learning_rate}")
+    print(f"  Precision: FP32 (more stable than FP16 for this model)")
     print(f"  LR scheduler: cosine (maintains min LR throughout training)")
     print(f"  Checkpointing: every {train_args.save_steps} steps")
     print()

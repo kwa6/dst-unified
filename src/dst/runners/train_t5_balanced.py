@@ -131,12 +131,12 @@ def main():
     
     train_args = TrainingArguments(
         output_dir=str(out_dir),
-        per_device_train_batch_size=4,  # Reduced from 8 for stability
-        gradient_accumulation_steps=1,  # Reduced from 2 (effective batch = 4)
-        learning_rate=1e-4,  # Reduced from 2e-4 (FP32 is more stable at lower LR)
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=1,
+        learning_rate=1e-4,
         warmup_steps=args.warmup_steps,
         num_train_epochs=args.num_epochs,
-        logging_steps=20,
+        logging_steps=20,  # More frequent for better real-time feedback
         logging_strategy="steps",
         logging_first_step=True,
         eval_strategy="steps" if eval_ds else "no",
@@ -145,7 +145,7 @@ def main():
         save_steps=100,
         load_best_model_at_end=True if eval_ds else False,
         report_to=[],
-        fp16=False,  # Disabled — FP32 is more stable, even if slower
+        fp16=False,
         max_grad_norm=1.0,
         lr_scheduler_type="cosine",
         dataloader_num_workers=0,

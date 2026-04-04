@@ -6,3 +6,4 @@ sentencepiece
 pyyaml
 rich
 peft
+bitsandbytes>=0.46.1

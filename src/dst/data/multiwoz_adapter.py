@@ -65,11 +65,19 @@ def write_split(
                         continue
 
                     semi = domain_data.get("semi", {}) or {}
+                    book = domain_data.get("book", {}) or {}
 
-                    # observed slot values
+                    # observed slot values from both informable and bookable slots
                     observed = {}
+                    
+                    # Extract informable slots
                     for slot, value in semi.items():
                         slot_name = f"{domain}-{slot}"
+                        observed[slot_name] = norm_value(value)
+                    
+                    # Extract bookable slots (e.g., book day, book people, book time, book stay)
+                    for slot, value in book.items():
+                        slot_name = f"{domain}-book {slot}"
                         observed[slot_name] = norm_value(value)
 
                     # write examples for all schema slots in this domain

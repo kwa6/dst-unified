@@ -1,23 +1,150 @@
 {
+  "attraction-area": {
+    "description": "area or part of town where the attraction is located",
+    "examples": ["centre", "centre>west", "centre|west", "dontcare", "east"]
+  },
+  "attraction-name": {
+    "description": "name of the attraction",
+    "examples": ["abbey pool", "abbey pool and astroturf", "abbey pool and astroturf pitch", "abbey pool and astroturf pitch|cambridge museum of technology", "adc"]
+  },
+  "attraction-type": {
+    "description": "type of attraction",
+    "examples": ["architecture", "architecture|park", "boat", "boating", "boat|swimming pool"]
+  },
+  "bus-arriveBy": {
+    "description": "arrival time",
+    "examples": ["none"]
+  },
+  "bus-book people": {
+    "description": "number of people for booking at bus",
+    "examples": ["none"]
+  },
+  "bus-day": {
+    "description": "day of travel",
+    "examples": ["none", "wednesday"]
+  },
+  "bus-departure": {
+    "description": "departure location for bus",
+    "examples": ["cambridge", "none"]
+  },
+  "bus-destination": {
+    "description": "destination for bus",
+    "examples": ["bishops stortford", "cambridge", "kohinoor", "london kings cross", "none"]
+  },
+  "bus-leaveAt": {
+    "description": "departure time",
+    "examples": ["21:45", "none"]
+  },
+  "hospital-department": {
+    "description": "hospital department",
+    "examples": ["acute medical assessment unit", "acute medicine for the elderly", "antenatal", "cambridge eye unit", "cardiology"]
+  },
   "hotel-area": {
     "description": "area or part of town where the hotel is located",
-    "examples": ["centre", "north", "south", "east", "west"]
+    "examples": ["centre", "dontcare", "east", "east|south", "none"]
+  },
+  "hotel-book day": {
+    "description": "day for booking at hotel",
+    "examples": ["dontcare", "friday", "friday>tuesday", "monday", "monday<thursday"]
+  },
+  "hotel-book people": {
+    "description": "number of people for booking at hotel",
+    "examples": ["1", "2", "3", "4", "5"]
+  },
+  "hotel-book stay": {
+    "description": "number of nights for booking at hotel",
+    "examples": ["1", "2", "2|3", "3", "3|1"]
+  },
+  "hotel-internet": {
+    "description": "internet availability",
+    "examples": ["dontcare", "no", "none", "yes"]
+  },
+  "hotel-name": {
+    "description": "name of the hotel",
+    "examples": ["a and b guest house", "acorn guest house", "alesbray lodge guesthouse", "alexander bed and breakfast", "alexander bed and breakfast|el shaddai"]
+  },
+  "hotel-parking": {
+    "description": "parking availability",
+    "examples": ["dontcare", "free", "no", "none", "yes"]
   },
   "hotel-pricerange": {
     "description": "price range of the hotel",
-    "examples": ["cheap", "moderate", "expensive"]
+    "examples": ["cheap", "cheap>moderate", "cheap|moderate", "dontcare", "expensive"]
   },
-
+  "hotel-stars": {
+    "description": "star rating",
+    "examples": ["0", "1", "2", "3", "3|4"]
+  },
+  "hotel-type": {
+    "description": "type of hotel",
+    "examples": ["bed and breakfast", "dontcare", "guest house", "guesthouse", "hotel"]
+  },
   "restaurant-area": {
     "description": "area or part of town where the restaurant is located",
-    "examples": ["centre", "north", "south", "east", "west"]
+    "examples": ["centre", "dontcare", "east", "east>north", "east|south"]
+  },
+  "restaurant-book day": {
+    "description": "day for booking at restaurant",
+    "examples": ["dontcare", "friday", "monday", "monday|saturday", "monday|sunday"]
+  },
+  "restaurant-book people": {
+    "description": "number of people for booking at restaurant",
+    "examples": ["1", "2", "3", "4", "4|7"]
+  },
+  "restaurant-book time": {
+    "description": "time for booking at restaurant",
+    "examples": ["01:00", "03:00", "06:30", "08:45", "09:00"]
   },
   "restaurant-food": {
-    "description": "type of cuisine served at the restaurant",
-    "examples": ["chinese", "italian", "indian", "british"]
+    "description": "type of cuisine served",
+    "examples": ["afghan", "african", "afternoon tea", "american", "asian"]
+  },
+  "restaurant-name": {
+    "description": "name of the restaurant",
+    "examples": ["4 kings parade city centre", "Kohinoor", "adden", "alex", "ali baba"]
   },
   "restaurant-pricerange": {
     "description": "price range of the restaurant",
-    "examples": ["cheap", "moderate", "expensive"]
+    "examples": ["cheap", "cheap|moderate", "dontcare", "expensive", "expensive|moderate"]
+  },
+  "taxi-arriveBy": {
+    "description": "arrival time",
+    "examples": ["01:00", "01:15", "01:30", "01:45", "02:00"]
+  },
+  "taxi-departure": {
+    "description": "departure location for taxi",
+    "examples": ["172 chestertown road", "4455 woodbridge road", "a and b guest house", "abbey pool and astroturf pitch", "acorn guest house"]
+  },
+  "taxi-destination": {
+    "description": "destination for taxi",
+    "examples": ["a and b guest house", "abbey pool and astroturf pitch", "acorn guest house", "adc theatre", "addenbrookes hospital"]
+  },
+  "taxi-leaveAt": {
+    "description": "departure time",
+    "examples": ["00:45", "01:00", "01:15", "01:30", "01:45"]
+  },
+  "train-arriveBy": {
+    "description": "arrival time",
+    "examples": ["02:00", "02:30", "03:00", "05:30", "05:52"]
+  },
+  "train-book people": {
+    "description": "number of people for booking at train",
+    "examples": ["1", "10", "15", "2", "3"]
+  },
+  "train-day": {
+    "description": "day of travel",
+    "examples": ["dontcare", "friday", "monday", "none", "saturday"]
+  },
+  "train-departure": {
+    "description": "departure location for train",
+    "examples": ["aylesbray lodge guest", "birmingham new street", "bishops stortford", "brookshite", "broxbourne"]
+  },
+  "train-destination": {
+    "description": "destination for train",
+    "examples": ["birmingham new street", "bishops stortford", "bournemouth", "broxbourne", "cambridge"]
+  },
+  "train-leaveAt": {
+    "description": "departure time",
+    "examples": ["00:00", "02:00", "02:15", "05:00", "05:11"]
   }
 }

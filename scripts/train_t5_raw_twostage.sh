@@ -48,24 +48,31 @@ echo
 # ============================================================================
 # STAGE 1: Train on augmented data (LUAS or D0T)
 # ============================================================================
-echo
-echo "========================================"
-echo "STAGE 1: Training on $DATASET_UPPER data (raw)"
-echo "========================================"
-echo
+if [ -d "$STAGE1_DIR/final" ]; then
+    echo "========================================"
+    echo "STAGE 1: SKIPPED (already trained)"
+    echo "========================================"
+    echo "Found existing checkpoint: $STAGE1_DIR/final"
+    echo
+else
+    echo "========================================"
+    echo "STAGE 1: Training on $DATASET_UPPER data (raw)"
+    echo "========================================"
+    echo
 
-python -m dst.runners.train_t5_balanced \
-  --train_path      "data_unified/${DATASET}/train.jsonl" \
-  --stage           1 \
-  --no-balanced \
-  --out_dir         "$STAGE1_DIR" \
-  --total_examples  4000 \
-  --num_epochs      3 \
-  --warmup_steps    50
+    python -m dst.runners.train_t5_balanced \
+      --train_path      "data_unified/${DATASET}/train.jsonl" \
+      --stage           1 \
+      --no-balanced \
+      --out_dir         "$STAGE1_DIR" \
+      --total_examples  4000 \
+      --num_epochs      3 \
+      --warmup_steps    50
 
-echo
-echo "✓ Stage 1 complete. Checkpoint saved to: $STAGE1_DIR/final"
-echo
+    echo
+    echo "✓ Stage 1 complete. Checkpoint saved to: $STAGE1_DIR/final"
+    echo
+fi
 
 # ============================================================================
 # STAGE 2: Fine-tune on real data (MultiWOZ)

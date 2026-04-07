@@ -56,27 +56,34 @@ echo
 # ============================================================================
 # STAGE 1: Train on augmented data (LUAS or D0T)
 # ============================================================================
-echo
-echo "========================================"
-echo "STAGE 1: Training on $DATASET_UPPER data"
-echo "========================================"
-echo
+if [ -d "$STAGE1_DIR/final" ]; then
+    echo "========================================"
+    echo "STAGE 1: SKIPPED (already trained)"
+    echo "========================================"
+    echo "Found existing checkpoint: $STAGE1_DIR/final"
+    echo
+else
+    echo "========================================"
+    echo "STAGE 1: Training on $DATASET_UPPER data"
+    echo "========================================"
+    echo
 
-python -m dst.runners.train_llama \
-  --train_path      "data_unified/${DATASET}/train.jsonl" \
-  --stage           1 \
-  --model           "$MODEL" \
-  --out_dir         "$STAGE1_DIR" \
-  --total_examples  8000 \
-  --steps           500 \
-  --warmup_steps    50 \
-  --batch_size      4 \
-  --grad_accum      4 \
-  --lr              2e-4
+    python -m dst.runners.train_llama \
+      --train_path      "data_unified/${DATASET}/train.jsonl" \
+      --stage           1 \
+      --model           "$MODEL" \
+      --out_dir         "$STAGE1_DIR" \
+      --total_examples  8000 \
+      --steps           500 \
+      --warmup_steps    50 \
+      --batch_size      4 \
+      --grad_accum      4 \
+      --lr              2e-4
 
-echo
-echo "✓ Stage 1 complete. Checkpoint saved to: $STAGE1_DIR/final"
-echo
+    echo
+    echo "✓ Stage 1 complete. Checkpoint saved to: $STAGE1_DIR/final"
+    echo
+fi
 
 # ============================================================================
 # STAGE 2: Fine-tune on real data (MultiWOZ)

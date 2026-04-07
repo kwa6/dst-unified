@@ -192,7 +192,7 @@ def main():
     if args.checkpoint:
         print(f"\n[STAGE {args.stage}] Loading checkpoint from previous stage:")
         print(f"  Checkpoint: {args.checkpoint}")
-        llama = LlamaDSTModel.from_pretrained(args.checkpoint, load_in_4bit=args.load_in_4bit)
+        llama = LlamaDSTModel(args.checkpoint, load_in_4bit=args.load_in_4bit)
         current_warmup = min(20, args.warmup_steps)  # Shorter warmup for stage 2
         stage_desc = "Stage 2 (Fine-tuning on Real Data - MultiWOZ)"
     else:

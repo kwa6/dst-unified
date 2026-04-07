@@ -114,14 +114,12 @@ def parse_multiwoz(data_path: Path, val_path: Path, test_path: Path):
         turns_per_dialogue.append(len(log))
         n_turns += len(log)
         
-        # Build full dialogue user text (dialogue context)
-        dialogue_user_text = " ".join(
-            turn.get("text", "").lower() 
-            for t_idx, turn in enumerate(log) 
-            if t_idx % 2 == 0  # User turns only
-        )
-        
         for t_idx, turn in enumerate(log):
+            # Build cumulative dialogue context UP TO this turn only
+            dialogue_context = " ".join(
+                turn_up_to.get("text", "").lower()
+                for turn_up_to in log[:t_idx+1]
+            )
             if t_idx % 2 == 0:
                 n_user_turns += 1
             else:
@@ -159,7 +157,7 @@ def parse_multiwoz(data_path: Path, val_path: Path, test_path: Path):
                         slot_observed_count[s] += 1
                     
                     # Layered alignment categorization
-                    alignment_cat = categorize_alignment(v, dialogue_user_text)
+                    alignment_cat = categorize_alignment(v, dialogue_context)
                     slot_alignment_categories[s][alignment_cat] += 1
     
     return {
@@ -200,7 +198,7 @@ def parse_d0t(base_dir: Path):
     turns_by_dialogue = defaultdict(list)
     turns_by_id = {}
     turn_text = {}  # Store text for each turn
-    dialogue_texts = defaultdict(list)  # Store all dialogue texts (all speakers)
+    dialogue_turns_ordered = defaultdict(list)  # Store turns ordered by turn_index for cumulative context
     
     with turn_csv.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -212,17 +210,23 @@ def parse_d0t(base_dir: Path):
                 split = "train"
             
             speaker = row.get("speaker", "system").lower()
+            turn_index = int(row["turn_index"])
+            text = row.get("text", "").lower()
             turns_by_id[turn_id] = {
                 "dialogue": dialogue_id,
-                "turn_index": int(row["turn_index"]),
+                "turn_index": turn_index,
                 "speaker": speaker,
                 "split": split,
             }
-            text = row.get("text", "").lower()
             turn_text[turn_id] = text
-            # Store all dialogue text (D0T doesn't have clear user/system, so include all)
-            dialogue_texts[dialogue_id].append(text)
-            turns_by_dialogue[dialogue_id].append((int(row["turn_index"]), speaker))
+            # Store turns ordered by turn_index for building cumulative context
+            dialogue_turns_ordered[dialogue_id].append({
+                "turn_id": turn_id,
+                "turn_index": turn_index,
+                "speaker": speaker,
+                "text": text
+            })
+            turns_by_dialogue[dialogue_id].append((turn_index, speaker))
     
     # Count unique dialogues per split
     for dialogue_id, turns in turns_by_dialogue.items():
@@ -292,8 +296,14 @@ def parse_d0t(base_dir: Path):
                     slot_observed_count[slot_name] += 1
                 
                 # Layered alignment categorization
-                dialogue_user_text = " ".join(dialogue_texts.get(dialogue_id, []))
-                alignment_cat = categorize_alignment(v, dialogue_user_text)
+                # Build cumulative dialogue context UP TO this turn only
+                current_turn_index = turn["turn_index"]
+                dialogue_context = " ".join(
+                    t["text"]
+                    for t in sorted(dialogue_turns_ordered[dialogue_id], key=lambda x: x["turn_index"])
+                    if t["turn_index"] <= current_turn_index
+                )
+                alignment_cat = categorize_alignment(v, dialogue_context)
                 slot_alignment_categories[slot_name][alignment_cat] += 1
     
     return {
@@ -358,7 +368,7 @@ def parse_luas(luas_json_path: Path):
             turns = dialogue.get("turns", [])
             turns_per_dialogue.append(len(turns))
             
-            for turn in turns:
+            for turn_idx, turn in enumerate(turns):
                 n_turns += 1
                 speaker = str(turn.get("speaker", "")).lower()
                 if speaker == "user":
@@ -406,12 +416,12 @@ def parse_luas(luas_json_path: Path):
                                 slot_observed_count[slot_name] += 1
                             
                             # Layered alignment categorization
-                            dialogue_user_text = " ".join(
+                            # Build cumulative dialogue context UP TO this turn only
+                            dialogue_context = " ".join(
                                 turn.get("utterance", "").lower()
-                                for turn in turns
-                                if str(turn.get("speaker", "")).lower() == "user"
+                                for turn in turns[:turn_idx+1]
                             )
-                            alignment_cat = categorize_alignment(v, dialogue_user_text)
+                            alignment_cat = categorize_alignment(v, dialogue_context)
                             slot_alignment_categories[slot_name][alignment_cat] += 1
     
     # LUAS doesn't have explicit splits, assume train

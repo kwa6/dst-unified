@@ -144,13 +144,13 @@ def main():
         preprocess = make_preprocess_fn(tok)
         eval_ds = eval_ds.map(preprocess, batched=True, remove_columns=eval_ds.column_names)
         print(f"Eval dataset loaded: {len(eval_ds)} examples")
-     if args.stage == 1 else min(10, args.warmup_steps)
+    
     train_args = TrainingArguments(
         output_dir=str(out_dir),
         per_device_train_batch_size=4,
         gradient_accumulation_steps=1,
         learning_rate=1e-4,
-        warmup_steps=args.warmup_steps,
+        warmup_steps=args.warmup_steps if args.stage == 1 else min(10, args.warmup_steps),
         num_train_epochs=args.num_epochs,
         logging_steps=20,  # More frequent for better real-time feedback
         logging_strategy="steps",

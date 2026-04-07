@@ -83,6 +83,10 @@ def main():
     ap.add_argument("--warmup_steps", type=int, default=50, help="Warmup steps for learning rate scheduler")
     ap.add_argument("--eval_path", default=None, help="JSONL file for evaluation during training")
     ap.add_argument("--seed", type=int, default=13)
+    ap.add_argument("--stage", type=int, default=1, choices=[1, 2], help="Training stage: 1=augmented data, 2=real data fine-tune")
+    ap.add_argument("--checkpoint", default=None, help="Path to checkpoint to load for stage 2 fine-tuning")
+    ap.add_argument("--balanced", action="store_true", default=True, help="Use balanced dataset (default: True)")
+    ap.add_argument("--no-balanced", dest="balanced", action="store_false", help="Use raw unbalanced dataset")
     args = ap.parse_args()
     
     # GPU requirement check: fail fast if CUDA is not available
@@ -101,17 +105,28 @@ def main():
     rows = load_rows(args.train_path, limit=args.limit_read)
     print("Rows loaded:", len(rows))
     print("Non-none:", sum(1 for r in rows if r["target_text"] != "none"))
-    print("None:", sum(1 for r in rows if r["target_text"] == "none"))
-
+    print("None:", sdataset...")
+    if args.balanced:
+        print("  Using BALANCED dataset (50/50 none/non-none split)")
+        ds = make_balanced_dataset(rows, total_examples=args.total_examples, seed=args.seed)
+    else:
+        print("  Using RAW UNBALANCED dataset (natural distribution)")
+        ds = Dataset.from_list(rows
     print("Building balanced dataset...")
     ds = make_balanced_dataset(rows, total_examples=args.total_examples, seed=args.seed)
 
     print("Loading model/tokenizer...")
     tok = AutoTokenizer.from_pretrained(args.model_name)
-    model = AutoModelForSeq2SeqLM.from_pretrained(
-        args.model_name,
-        tie_word_embeddings=False  # Suppress tied weights warning
-    )
+    
+    # Load from checkpoint if stage 2
+    if args.stage == 2 and args.checkpoint:
+        print(f"Loading checkpoint from: {args.checkpoint}")
+        model = AutoModelForSeq2SeqLM.from_pretrained(args.checkpoint, tie_word_embeddings=False)
+    else:
+        model = AutoModelForSeq2SeqLM.from_pretrained(
+            args.model_name,
+            tie_word_embeddings=False  # Suppress tied weights warning
+        )
     model = model.to("cuda")
     print(f"Model loaded and moved to CUDA")
 
@@ -128,7 +143,7 @@ def main():
         preprocess = make_preprocess_fn(tok)
         eval_ds = eval_ds.map(preprocess, batched=True, remove_columns=eval_ds.column_names)
         print(f"Eval dataset loaded: {len(eval_ds)} examples")
-    
+     if args.stage == 1 else min(10, args.warmup_steps)
     train_args = TrainingArguments(
         output_dir=str(out_dir),
         per_device_train_batch_size=4,
@@ -141,9 +156,8 @@ def main():
         logging_first_step=True,
         eval_strategy="steps" if eval_ds else "no",
         eval_steps=50 if eval_ds else None,
-        save_strategy="steps",
-        save_steps=100,
-        load_best_model_at_end=True if eval_ds else False,
+        save_strategy="no",  # Don't save intermediate checkpoints to save disk space
+        load_best_model_at_end=False,
         report_to=[],
         fp16=False,
         max_grad_norm=1.0,
@@ -165,11 +179,12 @@ def main():
     print(f"\nTraining Configuration:")
     print(f"  Batch size: 4 × {train_args.gradient_accumulation_steps} (effective = 4)")
     print(f"  Num epochs: {args.num_epochs}")
+    print(f"  Dataset type: {'BALANCED' if args.balanced else 'RAW UNBALANCED'}")
     print(f"  Warmup steps: {args.warmup_steps}")
     print(f"  Learning rate: {train_args.learning_rate}")
     print(f"  Precision: FP32 (more stable than FP16 for this model)")
     print(f"  LR scheduler: cosine (maintains min LR throughout training)")
-    print(f"  Checkpointing: every {train_args.save_steps} steps")
+    print(f"  Checkpointing: disabled (saves to 'final' directory only)")
     print()
     print("Training...")
     trainer.train()

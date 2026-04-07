@@ -1,5 +1,5 @@
 """
-Fine-tune a Llama Instruct model on the DST task using LoRA.
+Fine-tune a Llama Instruct model on the DST task using LoRA (single-stage or two-stage).
 
 LoRA (Low-Rank Adaptation) freezes the base model weights and only trains
 small adapter layers — this makes it feasible to fine-tune a 7B model on a
@@ -8,7 +8,7 @@ single A100 (40GB), or a 1B model on CPU (slow but possible).
 Requirements:
     pip install peft
 
-Usage (UCloud / Linux):
+Usage (Single-stage: UCloud / Linux):
     export PYTHONPATH=src
     python -m dst.runners.train_llama \\
         --train_path data_unified/multiwoz24/train.jsonl \\
@@ -16,13 +16,22 @@ Usage (UCloud / Linux):
         --out_dir    runs/llama_mwoz_v1 \\
         --steps      500
 
-Usage (Windows PowerShell):
-    $env:PYTHONPATH = "src"
-    python -m dst.runners.train_llama `
-        --train_path data_unified/multiwoz24/train.jsonl `
-        --model      meta-llama/Llama-2-7b-chat-hf `
-        --out_dir    runs/llama_mwoz_v1 `
+Usage (Two-stage: Stage 1 - augmented data):
+    python -m dst.runners.train_llama \\
+        --train_path data_unified/luas/train.jsonl \\
+        --stage 1 \\
+        --model      meta-llama/Llama-2-7b-chat-hf \\
+        --out_dir    runs/llama_stage1_luas \\
         --steps      500
+
+Usage (Two-stage: Stage 2 - fine-tune on real data):
+    python -m dst.runners.train_llama \\
+        --train_path data_unified/multiwoz24/train.jsonl \\
+        --stage 2 \\
+        --checkpoint runs/llama_stage1_luas/final \\
+        --out_dir    runs/llama_stage2_mwoz_final \\
+        --steps      300 \\
+        --lr_stage2  5e-5
 """
 import argparse
 import random
@@ -124,7 +133,7 @@ class LlamaDSTDataset(torch.utils.data.Dataset):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Fine-tune Llama for DST with LoRA.")
+    ap = argparse.ArgumentParser(description="Fine-tune Llama for DST with LoRA (single or two-stage).")
     ap.add_argument("--train_path",      default="data_unified/multiwoz24/train.jsonl")
     ap.add_argument("--model",           default="meta-llama/Llama-2-7b-chat-hf",
                     help="HF model ID or local path")
@@ -149,6 +158,12 @@ def main():
     ap.add_argument("--eval_examples",   type=int, default=500,
                     help="Number of balanced eval examples")
     ap.add_argument("--seed",            type=int, default=13)
+    
+    # Two-stage training arguments
+    ap.add_argument("--stage",           type=int, default=1,
+                    help="Training stage: 1=augmented data (LUAS/D0T), 2=real data (MultiWOZ)")
+    ap.add_argument("--checkpoint",      default=None,
+                    help="Checkpoint path (for stage 2: load from stage 1)")
     args = ap.parse_args()
 
     # GPU requirement check: fail fast if CUDA is not available
@@ -174,7 +189,18 @@ def main():
     print(f"  Balanced set: {len(balanced)}")
 
     # 2) Load base model (inference mode first so LoRA attaches cleanly)
-    llama = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit)
+    if args.checkpoint:
+        print(f"\n[STAGE {args.stage}] Loading checkpoint from previous stage:")
+        print(f"  Checkpoint: {args.checkpoint}")
+        llama = LlamaDSTModel.from_pretrained(args.checkpoint, load_in_4bit=args.load_in_4bit)
+        current_warmup = min(20, args.warmup_steps)  # Shorter warmup for stage 2
+        stage_desc = "Stage 2 (Fine-tuning on Real Data - MultiWOZ)"
+    else:
+        print(f"\n[STAGE {args.stage}] Loading fresh model:")
+        print(f"  Model: {args.model}")
+        llama = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit)
+        current_warmup = args.warmup_steps
+        stage_desc = "Stage 1 (Training on Augmented Data - LUAS/D0T)"
 
     # 3) Attach LoRA adapters — only adapter weights will be trained
     llama.prepare_for_training(lora_r=args.lora_r, lora_alpha=args.lora_alpha)
@@ -197,16 +223,15 @@ def main():
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
         learning_rate=args.lr,
-        warmup_steps=args.warmup_steps,
+        warmup_steps=current_warmup,
         max_steps=args.steps,
         logging_steps=20,  # More frequent logging for better real-time feedback
         logging_strategy="steps",
         logging_first_step=True,
         eval_strategy="steps" if eval_ds else "no",
         eval_steps=100 if eval_ds else None,
-        save_strategy="steps",  # Save checkpoints regularly
-        save_steps=100,
-        load_best_model_at_end=True if eval_ds else False,
+        save_strategy="no",  # Don't save intermediate checkpoints to save disk space
+        load_best_model_at_end=False,
         report_to=[],
         fp16=fp16,
         max_grad_norm=1.0,
@@ -226,16 +251,16 @@ def main():
         data_collator=CausalLMLeftPadCollator(llama.tokenizer.pad_token_id),
     )
 
-    print("\nStarting LoRA fine-tuning...")
+    print(f"\n{stage_desc}")
     print(f"  Steps:          {args.steps}")
     print(f"  Batch size:     {args.batch_size} × {args.grad_accum} accum = "
           f"{args.batch_size * args.grad_accum} effective")
-    print(f"  Warmup steps:   {args.warmup_steps}")
+    print(f"  Warmup steps:   {current_warmup}")
     print(f"  Learning rate:  {args.lr}")
     print(f"  LR scheduler:   cosine (maintains min LR throughout training)")
     print(f"  LoRA r:         {args.lora_r}  alpha: {args.lora_alpha}")
     print(f"  Device:         {llama.device}  fp16: {fp16}")
-    print(f"  Checkpointing:  every 100 steps")
+    print(f"  Checkpointing:  disabled (saves to 'final' directory only)")
     print()
 
     trainer.train()
@@ -245,9 +270,22 @@ def main():
     trainer.save_model(str(final_dir))
     llama.tokenizer.save_pretrained(str(final_dir))
     print("\nDone. Saved to:", final_dir)
-    print("To evaluate, run:")
-    print(f"  python -m dst.runners.eval_jga_llama --model {final_dir} "
-          f"--path data_unified/multiwoz24/test.jsonl")
+    
+    if args.stage == 1:
+        print("\n" + "="*80)
+        print("STAGE 1 COMPLETE. Ready for Stage 2 (fine-tune on MultiWOZ real data):")
+        print("="*80)
+        print(f"python -m dst.runners.train_llama \\")
+        print(f"    --train_path data_unified/multiwoz24/train.jsonl \\")
+        print(f"    --stage 2 \\")
+        print(f"    --checkpoint {final_dir} \\")
+        print(f"    --out_dir runs/llama_stage2_mwoz_final \\")
+        print(f"    --steps 300")
+        print("="*80)
+    else:
+        print("\nTo evaluate, run:")
+        print(f"  python -m dst.runners.eval_jga_llama --model {final_dir} "
+              f"--path data_unified/multiwoz24/test.jsonl")
 
 
 if __name__ == "__main__":

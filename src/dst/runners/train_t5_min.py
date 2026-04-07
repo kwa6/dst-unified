@@ -90,8 +90,7 @@ def main():
         logging_steps=10,
         logging_strategy="steps",
         logging_first_step=True,
-        save_steps=40,
-        save_total_limit=2,
+        save_strategy="no",  # Don't save intermediate checkpoints to save disk space
         report_to=[],
         fp16=fp16,
         optim="adamw_torch",

@@ -105,14 +105,15 @@ def main():
     rows = load_rows(args.train_path, limit=args.limit_read)
     print("Rows loaded:", len(rows))
     print("Non-none:", sum(1 for r in rows if r["target_text"] != "none"))
-    print("None:", sdataset...")
+    print("None:", sum(1 for r in rows if r["target_text"] == "none"))
+
+    print("Building dataset...")
     if args.balanced:
         print("  Using BALANCED dataset (50/50 none/non-none split)")
         ds = make_balanced_dataset(rows, total_examples=args.total_examples, seed=args.seed)
     else:
         print("  Using RAW UNBALANCED dataset (natural distribution)")
-        ds = Dataset.from_list(rows
-    print("Building balanced dataset...")
+        ds = Dataset.from_list(rows)
     ds = make_balanced_dataset(rows, total_examples=args.total_examples, seed=args.seed)
 
     print("Loading model/tokenizer...")

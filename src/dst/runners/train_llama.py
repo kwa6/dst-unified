@@ -193,42 +193,7 @@ def main():
     if args.checkpoint:
         print(f"\n[STAGE {args.stage}] Loading checkpoint from previous stage:")
         print(f"  Checkpoint: {args.checkpoint}")
-        
-        # For Stage 2, merge the Stage 1 LoRA checkpoint to avoid nesting issues
-        checkpoint_path = Path(args.checkpoint)
-        is_lora = (checkpoint_path / "adapter_config.json").exists()
-        
-        if is_lora and args.stage == 2:
-            print("  Stage 1 is LoRA checkpoint — merging before loading...")
-            from peft import PeftModel, PeftConfig
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            
-            peft_cfg = PeftConfig.from_pretrained(str(checkpoint_path))
-            base_id = peft_cfg.base_model_name_or_path
-            
-            print(f"    Loading base model: {base_id}")
-            base_model = AutoModelForCausalLM.from_pretrained(
-                base_id,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="sequential"
-            )
-            
-            print(f"    Loading LoRA adapter from: {checkpoint_path}")
-            adapter_model = PeftModel.from_pretrained(base_model, str(checkpoint_path))
-            merged_model = adapter_model.merge_and_unload()
-            
-            # Save merged model temporarily
-            merged_dir = checkpoint_path.parent / f"{checkpoint_path.name}_merged"
-            print(f"    Saving merged model to: {merged_dir}")
-            merged_model.save_pretrained(str(merged_dir))
-            AutoTokenizer.from_pretrained(base_id).save_pretrained(str(merged_dir))
-            
-            # Load the merged model for training
-            llama = LlamaDSTModel(str(merged_dir), load_in_4bit=args.load_in_4bit)
-            print(f"  ✓ Merged checkpoint loaded")
-        else:
-            llama = LlamaDSTModel(args.checkpoint, load_in_4bit=args.load_in_4bit)
-        
+        llama = LlamaDSTModel(args.checkpoint, load_in_4bit=args.load_in_4bit)
         current_warmup = min(20, args.warmup_steps)  # Shorter warmup for stage 2
         stage_desc = "Stage 2 (Fine-tuning on Real Data - MultiWOZ)"
     else:

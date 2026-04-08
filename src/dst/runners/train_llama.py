@@ -34,6 +34,7 @@ Usage (Two-stage: Stage 2 - fine-tune on real data):
         --lr_stage2  5e-5
 """
 import argparse
+import json
 import random
 from pathlib import Path
 
@@ -269,6 +270,30 @@ def main():
     final_dir = out_dir / "final"
     trainer.save_model(str(final_dir))
     llama.tokenizer.save_pretrained(str(final_dir))
+    
+    # Fix adapter_config.json to include base_model_name_or_path
+    # This is required for stage 2 to load the checkpoint properly
+    adapter_config_path = final_dir / "adapter_config.json"
+    if adapter_config_path.exists():
+        with open(adapter_config_path, "r") as f:
+            adapter_cfg = json.load(f)
+        
+        # Determine the base model (what we started with)
+        if args.checkpoint:
+            # Stage 2: base model is embedded in the checkpoint we loaded from
+            from peft import PeftConfig
+            peft_cfg = PeftConfig.from_pretrained(args.checkpoint)
+            base_model_name = peft_cfg.base_model_name_or_path
+        else:
+            # Stage 1: base model is args.model
+            base_model_name = args.model
+        
+        if base_model_name:
+            adapter_cfg["base_model_name_or_path"] = base_model_name
+            with open(adapter_config_path, "w") as f:
+                json.dump(adapter_cfg, f, indent=2)
+            print(f"  Updated adapter_config.json: base_model_name_or_path = {base_model_name}")
+    
     print("\nDone. Saved to:", final_dir)
     
     if args.stage == 1:

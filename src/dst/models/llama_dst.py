@@ -128,7 +128,16 @@ class LlamaDSTModel:
             base_id = peft_cfg.base_model_name_or_path
             print(f"  LoRA adapter found — loading base model: {base_id}")
             self.tokenizer = AutoTokenizer.from_pretrained(base_id)
-            base_model = AutoModelForCausalLM.from_pretrained(base_id, **load_kwargs)
+            
+            # For LoRA loading, use explicit device mapping to avoid accelerate bugs
+            lora_load_kwargs = dict(load_kwargs)
+            if self.device != "cpu":
+                # Use explicit device mapping instead of "auto" to avoid accelerate.get_balanced_memory bug
+                lora_load_kwargs["device_map"] = {"": self.device}
+            else:
+                lora_load_kwargs.pop("device_map", None)
+            
+            base_model = AutoModelForCausalLM.from_pretrained(base_id, **lora_load_kwargs)
             self.model = PeftModel.from_pretrained(base_model, self.model_name)
             if not load_in_4bit:
                 self.model = self.model.merge_and_unload()

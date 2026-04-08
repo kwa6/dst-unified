@@ -279,20 +279,28 @@ def main():
             adapter_cfg = json.load(f)
         
         # Determine the base model (what we started with)
+        base_model_name = None
+        
         if args.checkpoint:
-            # Stage 2: base model is embedded in the checkpoint we loaded from
-            from peft import PeftConfig
-            peft_cfg = PeftConfig.from_pretrained(args.checkpoint)
-            base_model_name = peft_cfg.base_model_name_or_path
-        else:
-            # Stage 1: base model is args.model
-            base_model_name = args.model
+            # Stage 2: try to get base model from checkpoint, else use llama's model_name
+            try:
+                from peft import PeftConfig
+                peft_cfg = PeftConfig.from_pretrained(args.checkpoint)
+                base_model_name = peft_cfg.base_model_name_or_path
+            except Exception:
+                pass
+        
+        # Fallback: use the model name from LlamaDSTModel (it resolves HF IDs)
+        if not base_model_name:
+            base_model_name = llama.model_name
         
         if base_model_name:
             adapter_cfg["base_model_name_or_path"] = base_model_name
             with open(adapter_config_path, "w") as f:
                 json.dump(adapter_cfg, f, indent=2)
             print(f"  Updated adapter_config.json: base_model_name_or_path = {base_model_name}")
+        else:
+            print("  WARNING: Could not determine base_model_name_or_path")
     
     print("\nDone. Saved to:", final_dir)
     

@@ -42,14 +42,6 @@ echo
 # shellcheck disable=SC1091
 source scripts/setup_env.sh
 
-# Llama 2 7B: two-stage models
-run_step bash scripts/eval_jga_llama.sh \
-  runs/llama_stage2_luas_mwoz_final/final \
-  data_unified/multiwoz24/test.jsonl
-
-run_step bash scripts/eval_jga_llama.sh \
-  runs/llama_stage2_d0t_mwoz_final/final \
-  data_unified/multiwoz24/test.jsonl
 
 # Llama 3.1 8B: two-stage models (if they exist)
 if [ -d "runs/llama31_8b_stage2_luas_mwoz_final/final" ]; then

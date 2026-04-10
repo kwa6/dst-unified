@@ -118,7 +118,12 @@ def main():
             writer.writerow(['timestamp', 'model', 'dataset', 'jga', 'slot_acc', 'non_none_acc'])
         
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        model_name = Path(args.model).name
+        # Use parent directory name, removing "_final" suffix for clarity
+        model_path = Path(args.model)
+        if model_path.name == "final" and model_path.parent.name:
+            model_name = model_path.parent.name.replace("_final", "")
+        else:
+            model_name = model_path.name.replace("_final", "")
         dataset_name = Path(args.path).stem
         writer.writerow([timestamp, model_name, dataset_name, f'{jga:.4f}', f'{slot_acc:.4f}', f'{non_none_acc:.4f}'])
     

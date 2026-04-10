@@ -22,7 +22,7 @@ python -m dst.runners.train_llama \
   --eval_path       data_unified/multiwoz24/val.jsonl \
   --model           "$MODEL" \
   --out_dir         "$OUT_DIR" \
-  --total_examples  8000 \
+  --total_examples  32000 \
   --steps           500 \
   --warmup_steps    50 \
   --batch_size      4 \

@@ -19,7 +19,6 @@ export PYTHONPATH=src
 export HF_TOKEN="$HF_TOKEN"
 python -m dst.runners.train_llama \
   --train_path      data_unified/d0t/train.jsonl \
-#  --eval_path       data_unified/multiwoz24/val.jsonl \
   --model           "$MODEL" \
   --out_dir         "$OUT_DIR" \
   --total_examples  128000 \

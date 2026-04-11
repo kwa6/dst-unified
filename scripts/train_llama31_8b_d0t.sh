@@ -22,7 +22,7 @@ python -m dst.runners.train_llama \
   --model           "$MODEL" \
   --out_dir         "$OUT_DIR" \
   --total_examples  128000 \
-  --steps           4000 \
-  --warmup_steps    400 \
+  --steps           8000 \
+  --warmup_steps    800 \
   --batch_size      4 \
   --grad_accum      4

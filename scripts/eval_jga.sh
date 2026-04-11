@@ -8,10 +8,10 @@ fi
 
 MODEL_PATH="$1"
 JSONL_PATH="$2"
-MAX_TURNS="${3:-200}"
+MAX_TURNS="${3:-}"
 
 export PYTHONPATH=src
 python -m dst.runners.eval_jga \
   --path "$JSONL_PATH" \
   --model "$MODEL_PATH" \
-  --max_turns "$MAX_TURNS"
+  ${MAX_TURNS:+--max_turns "$MAX_TURNS"}

@@ -15,6 +15,7 @@ Usage:
 """
 import argparse
 import csv
+import json
 import sys
 from collections import defaultdict
 from datetime import datetime
@@ -52,6 +53,7 @@ def main():
     ap.add_argument("--force_cuda",      action="store_true",
                     help="Force CUDA usage even if torch.cuda.is_available() returns False (for old drivers on UCloud)")
     ap.add_argument("--results_file", default="results.csv", help="CSV file to log results (default: results.csv)")
+    ap.add_argument("--mismatches_file", default=None, help="JSON file to save all mismatches for analysis")
     args = ap.parse_args()
 
     # 1) Load and group rows by (dialogue_id, turn_id)
@@ -77,6 +79,7 @@ def main():
     total_non_none = 0
     correct_non_none = 0
     mismatches_printed = 0
+    mismatches_data = []  # Collect all mismatches for JSON export
 
     for idx, key in enumerate(tqdm(turn_keys, desc="Evaluating", unit="turn")):
         rows = groups[key]
@@ -101,6 +104,17 @@ def main():
             else:
                 turn_all_correct = False
                 turn_mismatches.append((r["slot_name"], gold, pred))
+                # Collect for JSON export
+                d_id, t_id = key
+                mismatches_data.append({
+                    "dialogue_id": d_id,
+                    "turn_id": t_id,
+                    "slot_name": r["slot_name"],
+                    "slot_description": r["slot_description"],
+                    "gold": gold,
+                    "pred": pred,
+                    "context": r["dialogue_context"]
+                })
 
             if gold != "none":
                 total_non_none += 1
@@ -149,7 +163,13 @@ def main():
         dataset_name = Path(args.path).stem
         writer.writerow([timestamp, model_name, dataset_name, f'{jga:.4f}', f'{slot_acc:.4f}', f'{non_none_acc:.4f}'])
     
-    print(f"\nResults saved to: {args.results_file}")
+    print(f"Results saved to: {args.results_file}")
+    
+    # Save mismatches to JSON if requested
+    if args.mismatches_file:
+        with open(args.mismatches_file, 'w') as f:
+            json.dump(mismatches_data, f, indent=2)
+        print(f"Mismatches saved to: {args.mismatches_file} ({len(mismatches_data)} errors)")
 
 
 if __name__ == "__main__":

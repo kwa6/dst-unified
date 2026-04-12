@@ -13,7 +13,7 @@ if [ -z "${HF_TOKEN:-}" ]; then
 fi
 
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
-OUT_DIR="runs/llama31_8b_mwoz_v1"
+OUT_DIR="runs/llama31_8b_mwoz_v2"
 
 export PYTHONPATH=src
 export HF_TOKEN="$HF_TOKEN"

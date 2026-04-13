@@ -261,6 +261,12 @@ class LlamaDSTModel:
         # Check if model is already wrapped with LoRA adapters
         if isinstance(self.model, PeftModel):
             print("  LoRA adapters already attached (from checkpoint)")
+            # CRITICAL FIX for QLoRA + loaded checkpoints:
+            # When loading a 4-bit checkpoint, adapter modules exist but aren't marked as trainable.
+            # We need to explicitly enable gradients on adapter parameters.
+            for name, param in self.model.named_parameters():
+                if "lora" in name:
+                    param.requires_grad = True
         else:
             # Attach new adapters
             lora_cfg = LoraConfig(
@@ -277,9 +283,7 @@ class LlamaDSTModel:
         # Gradient checkpointing reduces activation memory at the cost of speed
         self.model.gradient_checkpointing_enable()
         
-        # CRITICAL: Set to training mode BEFORE printing
-        # For loaded checkpoints (especially with 4-bit QLoRA), this ensures
-        # adapter parameters are marked as trainable
+        # Set to training mode
         self.model.train()
         
         # Print AFTER train() to see actual trainable params

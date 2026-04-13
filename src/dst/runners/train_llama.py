@@ -278,6 +278,15 @@ def main():
     trainer.save_model(str(final_dir))
     llama.tokenizer.save_pretrained(str(final_dir))
     
+    # Verify adapter was saved correctly
+    adapter_model_path = final_dir / "adapter_model.bin"
+    if not adapter_model_path.exists():
+        print("\n⚠️  WARNING: adapter_model.bin not found!")
+        print("   The checkpoint may be incomplete or corrupted.")
+    else:
+        size_mb = adapter_model_path.stat().st_size / (1024**1024)
+        print(f"\n✓ Adapter saved successfully: {size_mb:.1f}MB")
+    
     # Fix adapter_config.json to include base_model_name_or_path
     # This is required for stage 2 to load the checkpoint properly
     adapter_config_path = final_dir / "adapter_config.json"

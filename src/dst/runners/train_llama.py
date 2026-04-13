@@ -198,14 +198,14 @@ def main():
     if args.stage == 2:
         print(f"\n[STAGE {args.stage}] Loading checkpoint from previous stage:")
         print(f"  Checkpoint: {args.checkpoint}")
-        llama = LlamaDSTModel(args.checkpoint, load_in_4bit=args.load_in_4bit)
+        llama = LlamaDSTModel(args.checkpoint, load_in_4bit=args.load_in_4bit, for_training=True)
         current_warmup = args.warmup_steps_stage2
         current_lr = args.lr_stage2
         stage_desc = "Stage 2 (Fine-tuning on Real Data - MultiWOZ)"
     else:
         print(f"\n[STAGE {args.stage}] Loading fresh model:")
         print(f"  Model: {args.model}")
-        llama = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit)
+        llama = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit, for_training=True)
         current_warmup = args.warmup_steps
         current_lr = args.lr
         stage_desc = "Stage 1 (Training on Augmented Data - LUAS/D0T)"

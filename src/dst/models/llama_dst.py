@@ -66,8 +66,9 @@ class LlamaDSTModel:
 
     DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
-    def __init__(self, model_name: str | None = None, device: str | None = None, load_in_4bit: bool = False, force_cuda: bool = False):
+    def __init__(self, model_name: str | None = None, device: str | None = None, load_in_4bit: bool = False, force_cuda: bool = False, for_training: bool = False):
         self.model_name = model_name or self.DEFAULT_MODEL
+        self.for_training = for_training
         
         # Determine device: explicit > force_cuda > auto-detect
         if device:
@@ -139,8 +140,14 @@ class LlamaDSTModel:
             
             base_model = AutoModelForCausalLM.from_pretrained(base_id, **lora_load_kwargs)
             self.model = PeftModel.from_pretrained(base_model, self.model_name)
-            if not load_in_4bit:
+            
+            # CRITICAL: Only merge if NOT loading for further training
+            # If we merge adapters into base model, we can't train new adapters on top.
+            # For training (e.g., stage 2), keep the PeftModel wrapper intact.
+            if not load_in_4bit and not self.for_training:
                 self.model = self.model.merge_and_unload()
+            elif self.for_training:
+                print("  Keeping LoRA adapters separate (for further training)")
         elif local:
             try:
                 self.tokenizer = AutoTokenizer.from_pretrained(
@@ -239,25 +246,34 @@ class LlamaDSTModel:
 
         Call this once before passing the model to a Trainer.
         Puts the model back into training mode.
+        
+        If the model already has LoRA adapters (from a checkpoint), this skips
+        attachment and just enables gradient checkpointing and training mode.
         """
         try:
-            from peft import get_peft_model, LoraConfig, TaskType
+            from peft import get_peft_model, LoraConfig, TaskType, PeftModel
         except ImportError as e:
             raise ImportError(
                 "peft is required for LoRA training. "
                 "Install it with:  pip install peft"
             ) from e
 
-        lora_cfg = LoraConfig(
-            task_type=TaskType.CAUSAL_LM,
-            r=lora_r,
-            lora_alpha=lora_alpha,
-            lora_dropout=lora_dropout,
-            # target all attention projection layers (works for Llama 2 & 3)
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-            bias="none",
-        )
-        self.model = get_peft_model(self.model, lora_cfg)
+        # Check if model is already wrapped with LoRA adapters
+        if isinstance(self.model, PeftModel):
+            print("  LoRA adapters already attached (from checkpoint)")
+        else:
+            # Attach new adapters
+            lora_cfg = LoraConfig(
+                task_type=TaskType.CAUSAL_LM,
+                r=lora_r,
+                lora_alpha=lora_alpha,
+                lora_dropout=lora_dropout,
+                # target all attention projection layers (works for Llama 2 & 3)
+                target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+                bias="none",
+            )
+            self.model = get_peft_model(self.model, lora_cfg)
+        
         self.model.print_trainable_parameters()
         # Gradient checkpointing reduces activation memory at the cost of speed
         self.model.gradient_checkpointing_enable()

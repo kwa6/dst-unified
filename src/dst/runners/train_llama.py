@@ -165,6 +165,8 @@ def main():
                     help="Training stage: 1=augmented data (LUAS/D0T), 2=real data (MultiWOZ)")
     ap.add_argument("--checkpoint",      default=None,
                     help="Checkpoint path (for stage 2: load from stage 1)")
+    ap.add_argument("--lr_stage2",       type=float, default=5e-5)
+    ap.add_argument("--warmup_steps_stage2", type=int, default=100)
     args = ap.parse_args()
 
     # GPU requirement check: fail fast if CUDA is not available
@@ -190,17 +192,22 @@ def main():
     print(f"  Balanced set: {len(balanced)}")
 
     # 2) Load base model (inference mode first so LoRA attaches cleanly)
-    if args.checkpoint:
+    if args.stage == 2 and not args.checkpoint:
+        raise ValueError("Stage 2 requires --checkpoint")
+    
+    if args.stage == 2:
         print(f"\n[STAGE {args.stage}] Loading checkpoint from previous stage:")
         print(f"  Checkpoint: {args.checkpoint}")
         llama = LlamaDSTModel(args.checkpoint, load_in_4bit=args.load_in_4bit)
-        current_warmup = min(20, args.warmup_steps)  # Shorter warmup for stage 2
+        current_warmup = args.warmup_steps_stage2
+        current_lr = args.lr_stage2
         stage_desc = "Stage 2 (Fine-tuning on Real Data - MultiWOZ)"
     else:
         print(f"\n[STAGE {args.stage}] Loading fresh model:")
         print(f"  Model: {args.model}")
         llama = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit)
         current_warmup = args.warmup_steps
+        current_lr = args.lr
         stage_desc = "Stage 1 (Training on Augmented Data - LUAS/D0T)"
 
     # 3) Attach LoRA adapters — only adapter weights will be trained
@@ -223,7 +230,7 @@ def main():
         output_dir=str(out_dir),
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
-        learning_rate=args.lr,
+        learning_rate=current_lr,
         warmup_steps=current_warmup,
         max_steps=args.steps,
         logging_steps=20,  # More frequent logging for better real-time feedback
@@ -257,7 +264,7 @@ def main():
     print(f"  Batch size:     {args.batch_size} × {args.grad_accum} accum = "
           f"{args.batch_size * args.grad_accum} effective")
     print(f"  Warmup steps:   {current_warmup}")
-    print(f"  Learning rate:  {args.lr}")
+    print(f"  Learning rate:  {current_lr}")
     print(f"  LR scheduler:   cosine (maintains min LR throughout training)")
     print(f"  LoRA r:         {args.lora_r}  alpha: {args.lora_alpha}")
     print(f"  Device:         {llama.device}  fp16: {fp16}")

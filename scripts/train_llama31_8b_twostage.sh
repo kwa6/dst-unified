@@ -39,8 +39,8 @@ export PYTHONPATH=src
 export HF_TOKEN="$HF_TOKEN"
 
 DATASET_UPPER=$(echo "$DATASET" | tr '[:lower:]' '[:upper:]')
-STAGE1_DIR="runs/llama31_8b_stage1_${DATASET}"
-STAGE2_DIR="runs/llama31_8b_stage2_${DATASET}_mwoz_final"
+STAGE1_DIR="runs/llama_stage1_${DATASET}_128k"
+STAGE2_DIR="runs/llama_stage2_${DATASET}_to_mwoz"
 
 echo
 echo "============================================"
@@ -70,15 +70,18 @@ else
 
     python -m dst.runners.train_llama \
       --train_path      "data_unified/${DATASET}/train.jsonl" \
+      --eval_path       "data_unified/multiwoz24/val.jsonl" \
       --stage           1 \
       --model           "$MODEL" \
       --out_dir         "$STAGE1_DIR" \
-      --total_examples  8000 \
-      --steps           500 \
-      --warmup_steps    50 \
+      --total_examples  128000 \
+      --steps           8000 \
+      --warmup_steps    800 \
       --batch_size      4 \
       --grad_accum      4 \
-      --lr              2e-4
+      --lr              2e-4 \
+      --max_length      512 \
+      --load_in_4bit
 
     echo
     echo "✓ Stage 1 complete. Checkpoint saved to: $STAGE1_DIR/final"
@@ -95,17 +98,19 @@ echo "========================================"
 echo
 
 python -m dst.runners.train_llama \
-  --train_path      "data_unified/multiwoz24/train.jsonl" \
-  --eval_path       "data_unified/multiwoz24/val.jsonl" \
-  --stage           2 \
-  --checkpoint      "$STAGE1_DIR/final" \
-  --out_dir         "$STAGE2_DIR" \
-  --total_examples  8000 \
-  --steps           300 \
-  --warmup_steps    50 \
-  --batch_size      4 \
-  --grad_accum      4 \
-  --lr              2e-4
+  --train_path          "data_unified/multiwoz24/train.jsonl" \
+  --eval_path           "data_unified/multiwoz24/val.jsonl" \
+  --stage               2 \
+  --checkpoint          "$STAGE1_DIR/final" \
+  --out_dir             "$STAGE2_DIR" \
+  --total_examples      8000 \
+  --steps               1500 \
+  --warmup_steps_stage2 100 \
+  --batch_size          4 \
+  --grad_accum          4 \
+  --lr_stage2           5e-5 \
+  --max_length          512 \
+  --load_in_4bit
 
 echo
 echo "============================================"

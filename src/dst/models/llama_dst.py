@@ -274,10 +274,16 @@ class LlamaDSTModel:
             )
             self.model = get_peft_model(self.model, lora_cfg)
         
-        self.model.print_trainable_parameters()
         # Gradient checkpointing reduces activation memory at the cost of speed
         self.model.gradient_checkpointing_enable()
+        
+        # CRITICAL: Set to training mode BEFORE printing
+        # For loaded checkpoints (especially with 4-bit QLoRA), this ensures
+        # adapter parameters are marked as trainable
         self.model.train()
+        
+        # Print AFTER train() to see actual trainable params
+        self.model.print_trainable_parameters()
 
     def build_training_batch(
         self, examples: List[Dict[str, str]], max_length: int = 512

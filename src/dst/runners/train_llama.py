@@ -275,7 +275,11 @@ def main():
 
     # 7) Save — saves LoRA adapter weights + tokenizer
     final_dir = out_dir / "final"
-    trainer.save_model(str(final_dir))
+    final_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Use PEFT's save_pretrained() to properly save LoRA adapter weights
+    # (trainer.save_model() doesn't always work correctly with LoRA)
+    llama.model.save_pretrained(str(final_dir))
     llama.tokenizer.save_pretrained(str(final_dir))
     
     # Verify adapter was saved correctly

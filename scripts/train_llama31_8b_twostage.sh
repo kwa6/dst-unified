@@ -77,6 +77,7 @@ else
       --total_examples  128000 \
       --steps           8000 \
       --warmup_steps    800 \
+      --balance_mode    50_50 \
       --batch_size      4 \
       --grad_accum      4 \
       --lr              2e-4 \
@@ -103,9 +104,10 @@ python -m dst.runners.train_llama \
   --stage               2 \
   --checkpoint          "$STAGE1_DIR/final" \
   --out_dir             "$STAGE2_DIR" \
-  --total_examples      8000 \
+  --total_examples      2000000 \
   --steps               1500 \
   --warmup_steps_stage2 100 \
+  --balance_mode        none \
   --batch_size          4 \
   --grad_accum          4 \
   --lr_stage2           5e-5 \

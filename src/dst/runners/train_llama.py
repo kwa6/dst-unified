@@ -158,6 +158,8 @@ def main():
                     help="JSONL validation file for eval during training")
     ap.add_argument("--eval_examples",   type=int, default=500,
                     help="Number of balanced eval examples")
+    ap.add_argument("--balance_mode",    choices=["50_50", "none"], default="50_50",
+                    help="Balance training data: '50_50'=50% none/50% non-none, 'none'=use all data as-is")
     ap.add_argument("--seed",            type=int, default=13)
     
     # Two-stage training arguments
@@ -181,15 +183,23 @@ def main():
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1) Load & balance data
+    # 1) Load & optionally balance data
     print("Loading rows from:", args.train_path)
     rows = load_rows(args.train_path, limit=args.limit_read)
     print(f"  Total rows:   {len(rows)}")
     print(f"  Non-none:     {sum(1 for r in rows if r['target_text'] != 'none')}")
     print(f"  None:         {sum(1 for r in rows if r['target_text'] == 'none')}")
 
-    balanced = make_balanced_dataset(rows, args.total_examples, seed=args.seed)
-    print(f"  Balanced set: {len(balanced)}")
+    if args.balance_mode == "50_50":
+        balanced = make_balanced_dataset(rows, args.total_examples, seed=args.seed)
+        print(f"  Balanced set (50% none / 50% non-none): {len(balanced)}")
+    else:
+        rng = random.Random(args.seed)
+        balanced = list(rows)
+        rng.shuffle(balanced)
+        if args.total_examples is not None and args.total_examples > 0:
+            balanced = balanced[:args.total_examples]
+        print(f"  Using all data as-is (no balancing): {len(balanced)}")
 
     # 2) Load base model (inference mode first so LoRA attaches cleanly)
     if args.stage == 2 and not args.checkpoint:
@@ -220,7 +230,14 @@ def main():
     eval_ds = None
     if args.eval_path:
         eval_rows = load_rows(args.eval_path, limit=args.limit_read)
-        eval_balanced = make_balanced_dataset(eval_rows, args.eval_examples, seed=args.seed + 1)
+        if args.balance_mode == "50_50":
+            eval_balanced = make_balanced_dataset(eval_rows, args.eval_examples, seed=args.seed + 1)
+        else:
+            rng = random.Random(args.seed + 1)
+            eval_balanced = list(eval_rows)
+            rng.shuffle(eval_balanced)
+            if args.eval_examples is not None and args.eval_examples > 0:
+                eval_balanced = eval_balanced[:args.eval_examples]
         eval_ds = LlamaDSTDataset(eval_balanced, llama, max_length=args.max_length)
         print(f"  Eval set:     {len(eval_balanced)}")
 
@@ -265,6 +282,7 @@ def main():
           f"{args.batch_size * args.grad_accum} effective")
     print(f"  Warmup steps:   {current_warmup}")
     print(f"  Learning rate:  {current_lr}")
+    print(f"  Balance mode:   {args.balance_mode}")
     print(f"  LR scheduler:   cosine (maintains min LR throughout training)")
     print(f"  LoRA r:         {args.lora_r}  alpha: {args.lora_alpha}")
     print(f"  Device:         {llama.device}  fp16: {fp16}")

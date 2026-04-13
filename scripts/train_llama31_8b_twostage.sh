@@ -39,8 +39,8 @@ export PYTHONPATH=src
 export HF_TOKEN="$HF_TOKEN"
 
 DATASET_UPPER=$(echo "$DATASET" | tr '[:lower:]' '[:upper:]')
-STAGE1_DIR="runs/llama_stage1_${DATASET}_128k"
-STAGE2_DIR="runs/llama_stage2_${DATASET}_to_mwoz"
+STAGE1_DIR="runs/llama31_8b_stage1_${DATASET}_128k"
+STAGE2_DIR="runs/llama31_8b_stage2_${DATASET}_to_mwoz"
 
 echo
 echo "============================================"

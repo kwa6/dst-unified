@@ -6,10 +6,11 @@ torchaudio==2.5.1
 
 transformers>=4.40.0
 datasets>=2.18.0
-accelerate==0.29.0
+accelerate>=0.31.0
 sentencepiece
 pyyaml
 rich
 
 peft==0.18.1
 bitsandbytes>=0.43.0
+

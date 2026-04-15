@@ -6,4 +6,6 @@ python -m dst.runners.train_t5_balanced \
   --train_path data_unified/d0t/train.jsonl \
   --total_examples 4000 \
   --steps 1000 \
-  --out_dir runs/t5_d0t_v1
+  --out_dir runs/t5_d0t_v1 \
+  --use_slot_description \
+  --use_value_examples

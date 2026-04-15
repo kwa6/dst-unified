@@ -29,6 +29,8 @@ def main():
     ap.add_argument("--print_mismatches", type=int, default=0, help="Print first N incorrect turns")
     ap.add_argument("--results_file", default="results.csv", help="CSV file to log results (default: results.csv)")
     ap.add_argument("--mismatches_file", default=None, help="JSON file to save all mismatches for analysis")
+    ap.add_argument("--use_slot_description", action="store_true", help="Include slot descriptions in prompts (default: off)")
+    ap.add_argument("--use_value_examples", action="store_true", help="Include value examples in prompts (default: off)")
     args = ap.parse_args()
 
     # 1) Load rows and group by (dialogue_id, turn_id)
@@ -69,8 +71,11 @@ def main():
             pe = make_prompt_example(
                 r["dialogue_context"],
                 r["slot_name"],
-                r["slot_description"],
                 r["target_value"],
+                slot_description=r.get("slot_description"),
+                use_desc=args.use_slot_description,
+                value_examples=r.get("value_examples"),
+                use_examples=args.use_value_examples,
             )
             pred = norm(model.predict(pe.input_text))
             gold = norm(r["target_value"])

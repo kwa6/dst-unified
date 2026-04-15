@@ -30,6 +30,14 @@ DATASET_UPPER=$(echo "$DATASET" | tr '[:lower:]' '[:upper:]')
 STAGE1_DIR="runs/t5_stage1_${DATASET}"
 STAGE2_DIR="runs/t5_stage2_${DATASET}_mwoz_final"
 
+# Set flags for D0T: include descriptions and examples
+# Set flags for LUAS: omit descriptions and examples (defaults)
+if [ "$DATASET" = "d0t" ]; then
+    STAGE1_FLAGS="--use_slot_description --use_value_examples"
+else
+    STAGE1_FLAGS=""
+fi
+
 echo
 echo "============================================"
 echo "TWO-STAGE T5 BALANCED FINE-TUNING"
@@ -62,9 +70,8 @@ else
       --out_dir         "$STAGE1_DIR" \
       --total_examples  4000 \
       --num_epochs      3 \
-      --warmup_steps    50
-
-    echo
+      --warmup_steps    50 \
+      $STAGE1_FLAGS
     echo "✓ Stage 1 complete. Checkpoint saved to: $STAGE1_DIR/final"
     echo
 fi

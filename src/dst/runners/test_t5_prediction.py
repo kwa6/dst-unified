@@ -14,8 +14,8 @@ def main():
         prompt = make_prompt_example(
             ex.dialogue_context,
             ex.slot_name,
-            ex.slot_description,
-            ex.target_value
+            ex.target_value,
+            slot_description=ex.slot_description,
         )
 
         pred = model.predict(prompt.input_text)

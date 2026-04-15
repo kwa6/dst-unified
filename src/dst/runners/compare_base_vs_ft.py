@@ -18,7 +18,7 @@ def score(model: T5DSTModel, data):
     total_non_none = 0
 
     for ex in data:
-        pe = make_prompt_example(ex.dialogue_context, ex.slot_name, ex.slot_description, ex.target_value)
+        pe = make_prompt_example(ex.dialogue_context, ex.slot_name, ex.target_value, slot_description=ex.slot_description)
         pred = norm(model.predict(pe.input_text))
         gold = norm(ex.target_value)
 

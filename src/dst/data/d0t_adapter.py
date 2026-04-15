@@ -64,6 +64,26 @@ def load_slots(slot_csv_path: str | Path):
     return slots_by_slot_id
 
 
+def load_value_candidates(value_candidate_csv_path: str | Path) -> Dict[str, List[str]]:
+    """
+    Load candidate values for each slot.
+    Returns:
+      candidates_by_slot_id: slot_id -> list of candidate values
+    """
+    candidates_by_slot_id: Dict[str, List[str]] = defaultdict(list)
+
+    with Path(value_candidate_csv_path).open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            row = {k: norm_text(v) for k, v in row.items()}
+            slot_id = row["slot_id"]
+            candidate_value = row["candidate_value"]
+            if candidate_value:
+                candidates_by_slot_id[slot_id].append(candidate_value)
+
+    return dict(candidates_by_slot_id)
+
+
 def build_dialogue_contexts(ordered_turns_by_dialogue: Dict[str, List[dict]]):
     """
     Returns:
@@ -92,6 +112,7 @@ def convert_d0t_train(
       - turn.csv
       - slot.csv
       - slot_value.csv
+      - value_candidate.csv
     """
     d0t_train_dir = Path(d0t_train_dir)
     out_path = Path(out_path)
@@ -100,12 +121,16 @@ def convert_d0t_train(
     turn_csv = d0t_train_dir / "turn.csv"
     slot_csv = d0t_train_dir / "slot.csv"
     slot_value_csv = d0t_train_dir / "slot_value.csv"
+    value_candidate_csv = d0t_train_dir / "value_candidate.csv"
 
     print("Loading turns...")
     turns_by_raw_turn_id, ordered_turns_by_dialogue = load_turns(turn_csv)
 
     print("Loading slots...")
     slots_by_slot_id = load_slots(slot_csv)
+
+    print("Loading value candidates...")
+    candidates_by_slot_id = load_value_candidates(value_candidate_csv)
 
     print("Building dialogue contexts...")
     contexts = build_dialogue_contexts(ordered_turns_by_dialogue)
@@ -137,6 +162,9 @@ def convert_d0t_train(
             turn_index = int(turn["turn_index"])
             context = contexts[(dialogue_id, turn_index)]
 
+            # Get candidate values for this slot
+            value_examples = candidates_by_slot_id.get(slot_id)
+
             ex = UnifiedDSTExample(
                 dataset="d0t",
                 split="train",
@@ -146,7 +174,7 @@ def convert_d0t_train(
                 dialogue_context=context,
                 slot_name=slot["slot"],
                 slot_description=slot["description"],
-                value_examples=None,
+                value_examples=value_examples,
                 target_value=norm_value(row["value"]),
             )
 

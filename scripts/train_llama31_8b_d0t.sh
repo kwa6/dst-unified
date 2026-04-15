@@ -25,4 +25,6 @@ python -m dst.runners.train_llama \
   --steps           8000 \
   --warmup_steps    800 \
   --batch_size      4 \
-  --grad_accum      4
+  --grad_accum      4 \
+  --use_slot_description \
+  --use_value_examples

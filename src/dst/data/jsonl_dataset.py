@@ -25,6 +25,10 @@ class JsonlExample:
     def target_value(self) -> str:
         return self.data["target_value"]
 
+    @property
+    def value_examples(self) -> Optional[List[str]]:
+        return self.data.get("value_examples")
+
 
 def iter_jsonl(path: str | Path, limit: Optional[int] = None) -> Iterator[Dict[str, Any]]:
     p = Path(path)

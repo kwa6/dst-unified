@@ -25,14 +25,17 @@ def norm(v: str) -> str:
     return v
 
 
-def load_rows(jsonl_path: str, limit: int | None = None):
+def load_rows(jsonl_path: str, limit: int | None = None, use_desc: bool = False, use_examples: bool = False):
     rows = []
     for obj in iter_jsonl(jsonl_path, limit=limit):
         pe = make_prompt_example(
             obj["dialogue_context"],
             obj["slot_name"],
-            obj["slot_description"],
             obj["target_value"],
+            slot_description=obj.get("slot_description"),
+            use_desc=use_desc,
+            value_examples=obj.get("value_examples"),
+            use_examples=use_examples,
         )
         rows.append({"input_text": pe.input_text, "target_text": norm(pe.target_text)})
     return rows
@@ -87,6 +90,8 @@ def main():
     ap.add_argument("--checkpoint", default=None, help="Path to checkpoint to load for stage 2 fine-tuning")
     ap.add_argument("--balanced", action="store_true", default=True, help="Use balanced dataset (default: True)")
     ap.add_argument("--no-balanced", dest="balanced", action="store_false", help="Use raw unbalanced dataset")
+    ap.add_argument("--use_slot_description", action="store_true", help="Include slot descriptions in prompts (default: off)")
+    ap.add_argument("--use_value_examples", action="store_true", help="Include value examples in prompts (default: off)")
     args = ap.parse_args()
     
     # GPU requirement check: fail fast if CUDA is not available
@@ -102,7 +107,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print("Loading rows...")
-    rows = load_rows(args.train_path, limit=args.limit_read)
+    rows = load_rows(args.train_path, limit=args.limit_read, use_desc=args.use_slot_description, use_examples=args.use_value_examples)
     print("Rows loaded:", len(rows))
     print("Non-none:", sum(1 for r in rows if r["target_text"] != "none"))
     print("None:", sum(1 for r in rows if r["target_text"] == "none"))

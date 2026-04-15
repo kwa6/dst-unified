@@ -54,14 +54,17 @@ def norm(v: str) -> str:
     return v
 
 
-def load_rows(jsonl_path: str, limit: int | None = None) -> list[dict]:
+def load_rows(jsonl_path: str, limit: int | None = None, use_desc: bool = False, use_examples: bool = False) -> list[dict]:
     rows = []
     for obj in iter_jsonl(jsonl_path, limit=limit):
         pe = make_prompt_example(
             obj["dialogue_context"],
             obj["slot_name"],
-            obj["slot_description"],
             obj["target_value"],
+            slot_description=obj.get("slot_description"),
+            use_desc=use_desc,
+            value_examples=obj.get("value_examples"),
+            use_examples=use_examples,
         )
         rows.append({
             "input_text":  pe.input_text,
@@ -169,6 +172,8 @@ def main():
                     help="Checkpoint path (for stage 2: load from stage 1)")
     ap.add_argument("--lr_stage2",       type=float, default=5e-5)
     ap.add_argument("--warmup_steps_stage2", type=int, default=100)
+    ap.add_argument("--use_slot_description", action="store_true", help="Include slot descriptions in prompts (default: off)")
+    ap.add_argument("--use_value_examples", action="store_true", help="Include value examples in prompts (default: off)")
     args = ap.parse_args()
 
     # GPU requirement check: fail fast if CUDA is not available
@@ -185,7 +190,7 @@ def main():
 
     # 1) Load & optionally balance data
     print("Loading rows from:", args.train_path)
-    rows = load_rows(args.train_path, limit=args.limit_read)
+    rows = load_rows(args.train_path, limit=args.limit_read, use_desc=args.use_slot_description, use_examples=args.use_value_examples)
     print(f"  Total rows:   {len(rows)}")
     print(f"  Non-none:     {sum(1 for r in rows if r['target_text'] != 'none')}")
     print(f"  None:         {sum(1 for r in rows if r['target_text'] == 'none')}")
@@ -229,7 +234,7 @@ def main():
     # 4b) Optional eval dataset
     eval_ds = None
     if args.eval_path:
-        eval_rows = load_rows(args.eval_path, limit=args.limit_read)
+        eval_rows = load_rows(args.eval_path, limit=args.limit_read, use_desc=args.use_slot_description, use_examples=args.use_value_examples)
         if args.balance_mode == "50_50":
             eval_balanced = make_balanced_dataset(eval_rows, args.eval_examples, seed=args.seed + 1)
         else:

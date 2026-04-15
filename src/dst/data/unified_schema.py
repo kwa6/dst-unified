@@ -17,8 +17,8 @@ class UnifiedDSTExample:
     speaker: Speaker
     dialogue_context: str
     slot_name: str
-    slot_description: str
     target_value: str  # value or "none"
+    slot_description: Optional[str] = None
     value_examples: Optional[List[str]] = None
 
     def to_json_dict(self) -> Dict[str, Any]:

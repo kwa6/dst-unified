@@ -42,6 +42,14 @@ DATASET_UPPER=$(echo "$DATASET" | tr '[:lower:]' '[:upper:]')
 STAGE1_DIR="runs/llama_stage1_${DATASET}"
 STAGE2_DIR="runs/llama_stage2_${DATASET}_mwoz_final"
 
+# Set flags for D0T: include descriptions and examples
+# Set flags for LUAS: omit descriptions and examples (defaults)
+if [ "$DATASET" = "d0t" ]; then
+    STAGE1_FLAGS="--use_slot_description --use_value_examples"
+else
+    STAGE1_FLAGS=""
+fi
+
 echo
 echo "============================================"
 echo "TWO-STAGE LLAMA FINE-TUNING"
@@ -78,7 +86,8 @@ else
       --warmup_steps    50 \
       --batch_size      4 \
       --grad_accum      4 \
-      --lr              2e-4
+      --lr              2e-4 \
+      $STAGE1_FLAGS
 
     echo
     echo "✓ Stage 1 complete. Checkpoint saved to: $STAGE1_DIR/final"

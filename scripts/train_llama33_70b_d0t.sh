@@ -28,5 +28,7 @@ python -m dst.runners.train_llama \
   --warmup_steps    50 \
   --batch_size      1 \
   --grad_accum      16 \
+  --use_slot_description \
+  --use_value_examples \
   --max_length      256 \
   --load_in_4bit

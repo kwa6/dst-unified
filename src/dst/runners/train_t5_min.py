@@ -15,14 +15,17 @@ from dst.data.jsonl_dataset import iter_jsonl
 from dst.models.prompting import make_prompt_example
 
 
-def load_as_hf_dataset(jsonl_path: str, limit: int | None = None) -> Dataset:
+def load_as_hf_dataset(jsonl_path: str, limit: int | None = None, use_desc: bool = False, use_examples: bool = False) -> Dataset:
     rows = []
     for obj in iter_jsonl(jsonl_path, limit=limit):
         pe = make_prompt_example(
             obj["dialogue_context"],
             obj["slot_name"],
-            obj["slot_description"],
             obj["target_value"],
+            slot_description=obj.get("slot_description"),
+            use_desc=use_desc,
+            value_examples=obj.get("value_examples"),
+            use_examples=use_examples,
         )
         rows.append({"input_text": pe.input_text, "target_text": pe.target_text})
     return Dataset.from_list(rows)
@@ -62,13 +65,15 @@ def main():
     ap.add_argument("--model_name", default="google/flan-t5-base")
     ap.add_argument("--limit", type=int, default=200)
     ap.add_argument("--steps", type=int, default=80)
+    ap.add_argument("--use_slot_description", action="store_true", help="Include slot descriptions in prompts (default: off)")
+    ap.add_argument("--use_value_examples", action="store_true", help="Include value examples in prompts (default: off)")
     args = ap.parse_args()
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print("Loading dataset...")
-    ds = load_as_hf_dataset(args.train_path, limit=args.limit)
+    ds = load_as_hf_dataset(args.train_path, limit=args.limit, use_desc=args.use_slot_description, use_examples=args.use_value_examples)
 
     print("Loading model/tokenizer...")
     tok = AutoTokenizer.from_pretrained(args.model_name)

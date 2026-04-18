@@ -49,7 +49,7 @@ run_step bash scripts/block_fetch_data.sh
 run_step bash scripts/block_build_data.sh
 
 # Model training
-run_step bash scripts/block_train_t5.sh
+# run_step bash scripts/block_train_t5.sh
 
 if [ -z "${HF_TOKEN:-}" ]; then
   echo
@@ -63,11 +63,11 @@ if [ -z "${HF_TOKEN:-}" ]; then
 fi
 
 run_step bash scripts/block_train_llama_31_8b.sh
-run_step bash scripts/block_train_llama_33_70b.sh
+# run_step bash scripts/block_train_llama_33_70b.sh
 
 # Model evaluation
-run_step bash scripts/block_eval_t5.sh
-run_step bash scripts/block_eval_llama.sh
+# run_step bash scripts/block_eval_t5.sh
+# run_step bash scripts/block_eval_llama.sh
 
 echo
 echo "==========================================="
@@ -81,8 +81,6 @@ echo "  Llama 3.1 8B: runs/llama31_8b_stage2_*_mwoz_final/final"
 echo "  Llama 3.3 70B: runs/llama33_70b_stage2_*_mwoz_final/final"
 echo
 echo "Comparison:"
-echo "  T5 Balanced vs Raw: Check block_eval_t5.sh output for JGA comparison"
-echo "  Llama models: Check block_eval_llama.sh output"
 echo
 echo "==========================================="
 

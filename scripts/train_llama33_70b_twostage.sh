@@ -82,14 +82,15 @@ else
       --stage           1 \
       --model           "$MODEL" \
       --out_dir         "$STAGE1_DIR" \
-      --total_examples  8000 \
-      --steps           500 \
-      --warmup_steps    50 \
-      --batch_size      1 \
-      --grad_accum      16 \
-      --max_length      256 \
-      --load_in_4bit \
+      --total_examples  128000 \
+      --steps           8000 \
+      --warmup_steps    800 \
+      --balance_mode    50_50 \
+      --batch_size      4 \
+      --grad_accum      4 \
       --lr              2e-4 \
+      --max_length      512 \
+      --load_in_4bit \
       $STAGE1_FLAGS
 
     echo
@@ -112,14 +113,15 @@ python -m dst.runners.train_llama \
   --stage           2 \
   --checkpoint      "$STAGE1_DIR/final" \
   --out_dir         "$STAGE2_DIR" \
-  --total_examples  8000 \
-  --steps           300 \
-  --warmup_steps    50 \
-  --batch_size      1 \
-  --grad_accum      16 \
-  --max_length      256 \
-  --load_in_4bit \
-  --lr              2e-4
+  --total_examples      2000000 \
+  --steps               1500 \
+  --warmup_steps_stage2 100 \
+  --balance_mode        none \
+  --batch_size          4 \
+  --grad_accum          4 \
+  --lr_stage2           5e-5 \
+  --max_length          512 \
+  --load_in_4bit
 
 echo
 echo "============================================"

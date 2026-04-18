@@ -13,5 +13,17 @@ __pycache__/
 
 # project outputs
 data_raw/
-data_unified/
 runs/
+outputs/
+results*.csv
+
+# generated stage-1 artifacts
+data_unified/*/*_full_128k_train.jsonl
+data_unified/*/*_aligned_*_train.jsonl
+data_unified/*/*_nonaligned_*_train.jsonl
+data_unified/*/*_randommatched_*_train.jsonl
+data_unified/*/*.manifest.json
+data_unified/*/*property_splits_manifest.json
+data_unified/*/splits/
+
+

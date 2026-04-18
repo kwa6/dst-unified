@@ -27,6 +27,10 @@ def load_split_ids(path: Path) -> list[str]:
     return [line.strip() for line in txt.splitlines() if line.strip()]
 
 
+def infer_speaker_from_turn_id(turn_id: int) -> str:
+    return "user" if turn_id % 2 == 0 else "system"
+
+
 def write_split(
     split: str,
     ids: list[str],
@@ -54,7 +58,8 @@ def write_split(
 
             for turn_id, turn in enumerate(dialogue):
                 text = turn["text"]
-                context += f"Turn {turn_id}: {text}\n"
+                speaker = infer_speaker_from_turn_id(turn_id)
+                context += f"Turn {turn_id} [{speaker}]: {text}\n"
 
                 metadata = turn.get("metadata") or {}
                 if not metadata:

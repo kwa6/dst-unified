@@ -35,6 +35,7 @@ Usage (Two-stage: Stage 2 - fine-tune on real data):
 """
 import argparse
 import json
+import os
 import random
 from pathlib import Path
 
@@ -176,6 +177,37 @@ def main():
     ap.add_argument("--use_value_examples", action="store_true", help="Include value examples in prompts (default: off)")
     args = ap.parse_args()
 
+    local_rank_env = os.environ.get("LOCAL_RANK")
+    local_rank = int(local_rank_env) if local_rank_env is not None else -1
+    is_distributed = local_rank >= 0
+    rank_env = os.environ.get("RANK")
+    world_env = os.environ.get("WORLD_SIZE")
+    rank = int(rank_env) if rank_env is not None else 0
+    world_size = int(world_env) if world_env is not None else 1
+    dist_available = torch.distributed.is_available()
+    dist_initialized = torch.distributed.is_initialized() if dist_available else False
+    ddp_active = is_distributed or dist_initialized
+
+    if is_distributed and torch.cuda.is_available():
+        torch.cuda.set_device(local_rank)
+
+    device_str = f"cuda:{torch.cuda.current_device()}" if torch.cuda.is_available() else "cpu"
+    device_map_auto_disabled = is_distributed
+
+    if rank == 0:
+        print(
+            "[dist] initialized={}".format(dist_initialized),
+            "local_rank={}".format(local_rank),
+            "rank={}".format(rank),
+            "world_size={}".format(world_size),
+            "device={}".format(device_str),
+            "ddp_active={}".format(ddp_active),
+            "device_map_auto_disabled={}".format(device_map_auto_disabled),
+        )
+
+    if ddp_active:
+        print(f"[dist] rank={rank} local_rank={local_rank} device={device_str}")
+
     # GPU requirement check: fail fast if CUDA is not available
     if not torch.cuda.is_available():
         raise RuntimeError(
@@ -213,14 +245,26 @@ def main():
     if args.stage == 2:
         print(f"\n[STAGE {args.stage}] Loading checkpoint from previous stage:")
         print(f"  Checkpoint: {args.checkpoint}")
-        llama = LlamaDSTModel(args.checkpoint, load_in_4bit=args.load_in_4bit, for_training=True)
+        llama = LlamaDSTModel(
+            args.checkpoint,
+            load_in_4bit=args.load_in_4bit,
+            for_training=True,
+            local_rank=local_rank if is_distributed else None,
+            use_device_map=not is_distributed,
+        )
         current_warmup = args.warmup_steps_stage2
         current_lr = args.lr_stage2
         stage_desc = "Stage 2 (Fine-tuning on Real Data - MultiWOZ)"
     else:
         print(f"\n[STAGE {args.stage}] Loading fresh model:")
         print(f"  Model: {args.model}")
-        llama = LlamaDSTModel(args.model, load_in_4bit=args.load_in_4bit, for_training=True)
+        llama = LlamaDSTModel(
+            args.model,
+            load_in_4bit=args.load_in_4bit,
+            for_training=True,
+            local_rank=local_rank if is_distributed else None,
+            use_device_map=not is_distributed,
+        )
         current_warmup = args.warmup_steps
         current_lr = args.lr
         stage_desc = "Stage 1 (Training on Augmented Data - LUAS/D0T)"
@@ -248,7 +292,7 @@ def main():
 
     # 5) Training arguments
     fp16 = llama.device != "cpu" and torch.cuda.is_available()
-    train_args = TrainingArguments(
+    train_args_kwargs = dict(
         output_dir=str(out_dir),
         per_device_train_batch_size=args.batch_size,
         gradient_accumulation_steps=args.grad_accum,
@@ -271,6 +315,44 @@ def main():
         seed=args.seed,
         remove_unused_columns=False,
     )
+
+    if is_distributed:
+        train_args_kwargs["ddp_find_unused_parameters"] = False
+
+    train_args = TrainingArguments(**train_args_kwargs)
+
+    dist_available_late = torch.distributed.is_available()
+    dist_initialized_late = torch.distributed.is_initialized() if dist_available_late else False
+    local_rank_env_late = os.environ.get("LOCAL_RANK")
+    rank_env_late = os.environ.get("RANK")
+    world_env_late = os.environ.get("WORLD_SIZE")
+    local_rank_late = int(local_rank_env_late) if local_rank_env_late is not None else -1
+    rank_late = int(rank_env_late) if rank_env_late is not None else 0
+    world_size_late = int(world_env_late) if world_env_late is not None else 1
+    training_args_local_rank = getattr(train_args, "local_rank", None)
+    training_args_parallel_mode = getattr(train_args, "parallel_mode", None)
+    expected_ddp_late = (
+        is_distributed
+        or (training_args_local_rank is not None and training_args_local_rank >= 0)
+        or dist_initialized_late
+    )
+    device_str_late = f"cuda:{torch.cuda.current_device()}" if torch.cuda.is_available() else "cpu"
+
+    if rank_late == 0:
+        print(
+            "[dist-late] available={}".format(dist_available_late),
+            "initialized={}".format(dist_initialized_late),
+            "local_rank={}".format(local_rank_late),
+            "rank={}".format(rank_late),
+            "world_size={}".format(world_size_late),
+            "device={}".format(device_str_late),
+            "training_args.local_rank={}".format(training_args_local_rank),
+            "training_args.parallel_mode={}".format(training_args_parallel_mode),
+            "ddp_expected={}".format(expected_ddp_late),
+        )
+
+    if expected_ddp_late:
+        print(f"[dist-late] rank={rank_late} local_rank={local_rank_late} device={device_str_late}")
 
     # 6) Train
     trainer = Trainer(

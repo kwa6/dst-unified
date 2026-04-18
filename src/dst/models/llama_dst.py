@@ -66,13 +66,24 @@ class LlamaDSTModel:
 
     DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
-    def __init__(self, model_name: str | None = None, device: str | None = None, load_in_4bit: bool = False, force_cuda: bool = False, for_training: bool = False):
+    def __init__(
+        self,
+        model_name: str | None = None,
+        device: str | None = None,
+        load_in_4bit: bool = False,
+        force_cuda: bool = False,
+        for_training: bool = False,
+        local_rank: int | None = None,
+        use_device_map: bool | None = None,
+    ):
         self.model_name = model_name or self.DEFAULT_MODEL
         self.for_training = for_training
         
         # Determine device: explicit > force_cuda > auto-detect
         if device:
             self.device = device
+        elif local_rank is not None:
+            self.device = f"cuda:{local_rank}"
         elif force_cuda:
             self.device = "cuda"
         else:
@@ -106,9 +117,14 @@ class LlamaDSTModel:
 
         local = _is_local_model_path(self.model_name) or _looks_like_local_path(self.model_name)
         lora  = local and _is_lora_checkpoint(self.model_name)
+        if use_device_map is None:
+            use_device_map = self.device != "cpu" and local_rank is None
+
+        self.use_device_map = use_device_map
+
         load_kwargs: dict = dict(
             dtype=torch.float16 if self.device != "cpu" else torch.float32,
-            device_map="auto" if self.device != "cpu" else None,
+            device_map="auto" if self.use_device_map and self.device != "cpu" else None,
             low_cpu_mem_usage=True,
         )
 
@@ -132,7 +148,7 @@ class LlamaDSTModel:
             
             # For LoRA loading, use explicit device mapping to avoid accelerate bugs
             lora_load_kwargs = dict(load_kwargs)
-            if self.device != "cpu":
+            if self.device != "cpu" and self.use_device_map:
                 # Use explicit device mapping instead of "auto" to avoid accelerate.get_balanced_memory bug
                 lora_load_kwargs["device_map"] = {"": self.device}
             else:
@@ -182,6 +198,8 @@ class LlamaDSTModel:
         if hasattr(gc, "max_length"):
             gc.max_length = None
 
+        if self.device != "cpu" and not self.use_device_map:
+            self.model.to(self.device)
         if self.device == "cpu":
             self.model.to(self.device)
         self.model.eval()

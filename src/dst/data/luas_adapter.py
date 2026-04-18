@@ -111,7 +111,7 @@ def convert_luas_train(
 
                 # Build cumulative context, but skip LUAS internal/meta turns
                 if not is_meta_utterance(utterance):
-                    context_parts.append(f"Turn {turn_id} [{speaker.upper()}]: {utterance}")
+                    context_parts.append(f"Turn {turn_id} [{speaker}]: {utterance}")
 
                 dialogue_context = "\n".join(context_parts)
                 n_turns += 1

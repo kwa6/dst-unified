@@ -20,6 +20,13 @@ def norm_value(v: str) -> str:
     return v
 
 
+def norm_speaker(v: str) -> str:
+    v = norm_text(v).lower()
+    if v in {"user", "system"}:
+        return v
+    return "unknown"
+
+
 def load_turns(turn_csv_path: str | Path):
     """
     Returns:
@@ -94,7 +101,8 @@ def build_dialogue_contexts(ordered_turns_by_dialogue: Dict[str, List[dict]]):
     for dialogue_id, turns in ordered_turns_by_dialogue.items():
         pieces = []
         for t in turns:
-            pieces.append(f'Turn {t["turn_index"]} [{t["speaker"]}]: {t["text"]}')
+            speaker = norm_speaker(t.get("speaker"))
+            pieces.append(f'Turn {t["turn_index"]} [{speaker}]: {t["text"]}')
             contexts[(dialogue_id, t["turn_index"])] = "\n".join(pieces)
 
     return contexts

@@ -54,6 +54,8 @@ def main():
                     help="Force CUDA usage even if torch.cuda.is_available() returns False (for old drivers on UCloud)")
     ap.add_argument("--results_file", default="results.csv", help="CSV file to log results (default: results.csv)")
     ap.add_argument("--mismatches_file", default=None, help="JSON file to save all mismatches for analysis")
+    ap.add_argument("--audit_file", default=None, help="JSON file to save evaluation audit details")
+    ap.add_argument("--audit_summary_file", default=None, help="JSON file to save evaluation summary")
     ap.add_argument("--use_slot_description", action="store_true", help="Include slot descriptions in prompts (default: off)")
     ap.add_argument("--use_value_examples", action="store_true", help="Include value examples in prompts (default: off)")
     args = ap.parse_args()
@@ -175,6 +177,55 @@ def main():
         with open(args.mismatches_file, 'w') as f:
             json.dump(mismatches_data, f, indent=2)
         print(f"Mismatches saved to: {args.mismatches_file} ({len(mismatches_data)} errors)")
+
+    if args.audit_file:
+        audit_payload = {
+            "path": args.path,
+            "model": args.model,
+            "turns": {
+                "total": total_turns,
+                "correct": correct_turns,
+                "jga": jga,
+            },
+            "slots": {
+                "total": total_slots,
+                "correct": correct_slots,
+                "slot_acc": slot_acc,
+            },
+            "non_none": {
+                "total": total_non_none,
+                "correct": correct_non_none,
+                "non_none_acc": non_none_acc,
+            },
+            "mismatches": mismatches_data,
+        }
+        with open(args.audit_file, 'w') as f:
+            json.dump(audit_payload, f, indent=2)
+        print(f"Audit saved to: {args.audit_file} ({len(mismatches_data)} errors)")
+
+    if args.audit_summary_file:
+        summary_payload = {
+            "path": args.path,
+            "model": args.model,
+            "turns": {
+                "total": total_turns,
+                "correct": correct_turns,
+                "jga": jga,
+            },
+            "slots": {
+                "total": total_slots,
+                "correct": correct_slots,
+                "slot_acc": slot_acc,
+            },
+            "non_none": {
+                "total": total_non_none,
+                "correct": correct_non_none,
+                "non_none_acc": non_none_acc,
+            },
+        }
+        with open(args.audit_summary_file, 'w') as f:
+            json.dump(summary_payload, f, indent=2)
+        print(f"Audit summary saved to: {args.audit_summary_file}")
 
 
 if __name__ == "__main__":

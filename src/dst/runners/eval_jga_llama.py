@@ -2,9 +2,9 @@
 Evaluate Llama Instruct on the DST task using Joint Goal Accuracy.
 
 Tested with:
-  - meta-llama/Llama-3.3-70B-Instruct   (needs 4×A100 on UCloud)
-  - meta-llama/Llama-3.1-8B-Instruct    (needs 1×A100 on UCloud)
-  - meta-llama/Llama-3.2-3B-Instruct    (needs 1×A100 on UCloud)
+  - meta-llama/Llama-3.3-70B-Instruct   (needs 4xA100 on UCloud)
+  - meta-llama/Llama-3.1-8B-Instruct    (needs 1xA100 on UCloud)
+  - meta-llama/Llama-3.2-3B-Instruct    (needs 1xA100 on UCloud)
   - meta-llama/Llama-3.2-1B-Instruct    (runs on CPU)
 
 Usage:
@@ -53,10 +53,10 @@ def main():
                     help="Force CUDA usage even if torch.cuda.is_available() returns False (for old drivers on UCloud)")
     ap.add_argument("--results_file", default="results.csv", help="CSV file to log results (default: results.csv)")
     ap.add_argument("--mismatches_file", default=None, help="JSON file to save all mismatches for analysis")
+    ap.add_argument("--audit_file", default=None, help="JSON file to save evaluation audit details")
+    ap.add_argument("--audit_summary_file", default=None, help="JSON file to save evaluation summary")
     ap.add_argument("--use_slot_description", action="store_true", help="Include slot descriptions in prompts (default: off)")
     ap.add_argument("--use_value_examples", action="store_true", help="Include value examples in prompts (default: off)")
-    ap.add_argument("--audit_file", default=None, help="JSON file to save all predictions for audit analysis")
-    ap.add_argument("--audit_summary_file", default=None, help="JSON file to save audit summary metrics")
     args = ap.parse_args()
 
     # 1) Load and group rows by (dialogue_id, turn_id)
@@ -121,10 +121,10 @@ def main():
                     "dialogue_id": d_id,
                     "turn_id": t_id,
                     "slot_name": r["slot_name"],
-                    "slot_description": r["slot_description"],
+                    "slot_description": r.get("slot_description"),
                     "gold": gold,
                     "pred": pred,
-                    "context": r["dialogue_context"]
+                    "context": r["dialogue_context"],
                 })
 
             if pred_canon == gold_canon:
@@ -174,16 +174,16 @@ def main():
     print(f"slots: {correct_slots}/{total_slots}  slot_acc={slot_acc:.4f}")
     print(f"non-none: {correct_non_none}/{total_non_none}  non_none_acc={non_none_acc:.4f}")
     print(f"canonical_slot_acc={canonical_slot_acc:.4f}")
-    
+
     # Log results to CSV
     results_path = Path(args.results_file)
     file_exists = results_path.exists()
-    
+
     with open(results_path, 'a', newline='') as f:
         writer = csv.writer(f)
         if not file_exists:
             writer.writerow(['timestamp', 'model', 'dataset', 'jga', 'slot_acc', 'non_none_acc'])
-        
+
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # Use parent directory name, removing "_final" suffix for clarity
         model_path = Path(args.model)
@@ -193,9 +193,9 @@ def main():
             model_name = model_path.name.replace("_final", "")
         dataset_name = Path(args.path).stem
         writer.writerow([timestamp, model_name, dataset_name, f'{jga:.4f}', f'{slot_acc:.4f}', f'{non_none_acc:.4f}'])
-    
+
     print(f"Results saved to: {args.results_file}")
-    
+
     # Save mismatches to JSON if requested
     if args.mismatches_file:
         with open(args.mismatches_file, 'w') as f:

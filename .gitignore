@@ -25,5 +25,6 @@ data_unified/*/*_randommatched_*_train.jsonl
 data_unified/*/*.manifest.json
 data_unified/*/*property_splits_manifest.json
 data_unified/*/splits/
+data_unified/
 
 

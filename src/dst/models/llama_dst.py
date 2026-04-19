@@ -146,11 +146,13 @@ class LlamaDSTModel:
             print(f"  LoRA adapter found — loading base model: {base_id}")
             self.tokenizer = AutoTokenizer.from_pretrained(base_id)
             
-            # For LoRA loading, use explicit device mapping to avoid accelerate bugs
+            # For LoRA loading, prefer sharding across GPUs when available
             lora_load_kwargs = dict(load_kwargs)
             if self.device != "cpu" and self.use_device_map:
-                # Use explicit device mapping instead of "auto" to avoid accelerate.get_balanced_memory bug
-                lora_load_kwargs["device_map"] = {"": self.device}
+                if torch.cuda.device_count() > 1:
+                    lora_load_kwargs["device_map"] = "auto"
+                else:
+                    lora_load_kwargs["device_map"] = {"": self.device}
             else:
                 lora_load_kwargs.pop("device_map", None)
             

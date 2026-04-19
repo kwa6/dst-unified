@@ -388,12 +388,14 @@ def main():
     llama.tokenizer.save_pretrained(str(final_dir))
     
     # Verify adapter was saved correctly
-    adapter_model_path = final_dir / "adapter_model.bin"
-    if not adapter_model_path.exists():
-        print("\n⚠️  WARNING: adapter_model.bin not found!")
+    adapter_model_bin = final_dir / "adapter_model.bin"
+    adapter_model_safetensors = final_dir / "adapter_model.safetensors"
+    if not adapter_model_bin.exists() and not adapter_model_safetensors.exists():
+        print("\n⚠️  WARNING: adapter_model.bin or adapter_model.safetensors not found!")
         print("   The checkpoint may be incomplete or corrupted.")
     else:
-        size_mb = adapter_model_path.stat().st_size / (1024**1024)
+        adapter_path = adapter_model_safetensors if adapter_model_safetensors.exists() else adapter_model_bin
+        size_mb = adapter_path.stat().st_size / (1024**1024)
         print(f"\n✓ Adapter saved successfully: {size_mb:.1f}MB")
     
     # Fix adapter_config.json to include base_model_name_or_path

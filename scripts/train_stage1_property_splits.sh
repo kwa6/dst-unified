@@ -58,22 +58,27 @@ run_train "data_unified/d0t/d0t_full_128k_train.jsonl" \
   "runs/llama31_8b_stage1_d0t_full_128k" \
   128000 8000 800 1
 
-# 3. LUAS aligned
+# 3. Mixed LUAS/D0T 50/50 full 128k
+run_train "data_unified/mixed/mixed_luas50_d0t50_full_128k_train.jsonl" \
+  "runs/llama31_8b_stage1_mixed_luas50_d0t50_full_128k" \
+  128000 8000 800 1
+
+# 4. LUAS aligned
 run_train "data_unified/luas/luas_aligned_34492_train.jsonl" \
   "runs/llama31_8b_stage1_luas_aligned_34492" \
   34516 2200 220 0
 
-# 4. LUAS nonaligned
+# 5. LUAS nonaligned
 run_train "data_unified/luas/luas_nonaligned_34492_train.jsonl" \
   "runs/llama31_8b_stage1_luas_nonaligned_34492" \
   34516 2200 220 0
 
-# 5. D0T aligned
+# 6. D0T aligned
 run_train "data_unified/d0t/d0t_aligned_34492_plus_native_none_train.jsonl" \
   "runs/llama31_8b_stage1_d0t_aligned_34492_plus_native_none" \
   45039 2800 280 1
 
-# 6. D0T nonaligned
+# 7. D0T nonaligned
 run_train "data_unified/d0t/d0t_nonaligned_34492_plus_same_native_none_train.jsonl" \
   "runs/llama31_8b_stage1_d0t_nonaligned_34492_plus_same_native_none" \
   45039 2800 280 1

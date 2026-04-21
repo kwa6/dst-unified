@@ -54,6 +54,7 @@ echo "[stage1-mixed] evaluation"
 python -m dst.runners.eval_jga_llama \
   --path "$EVAL_PATH" \
   --model "$OUT_DIR/final" \
+  --results_file results_llama_stage1_val.csv \
   --mismatches_file "$OUTPUT_DIR/llama31_8b_stage1_mixed_luas50_d0t50_full_128k_mismatches_val.json" \
   --audit_file "$OUTPUT_DIR/llama31_8b_stage1_mixed_luas50_d0t50_full_128k_audit_val.json" \
   --audit_summary_file "$OUTPUT_DIR/llama31_8b_stage1_mixed_luas50_d0t50_full_128k_audit_summary_val.json" \
